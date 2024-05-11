@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 
 enum customError: LocalizedError {
     case loginRTMError

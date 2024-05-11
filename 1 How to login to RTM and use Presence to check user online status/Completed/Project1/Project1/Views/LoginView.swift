@@ -71,12 +71,12 @@ struct LoginView: View {
                 else if value == agoraRTMVM.userID {
                     // Go to Current User ContactView
                     if let currentUserIndex = agoraRTMVM.listOfContacts.firstIndex(where: {$0.userID == agoraRTMVM.userID}) {
-                        ContactView(contact: $agoraRTMVM.listOfContacts[currentUserIndex], ownerID: agoraRTMVM.userID)
+                        ContactDetailView(contact: $agoraRTMVM.listOfContacts[currentUserIndex], ownerID: agoraRTMVM.userID, path: $path)
                             .environmentObject(agoraRTMVM)
                     }
                 }else if let index = agoraRTMVM.listOfContacts.firstIndex(where: {$0.userID == value}){
                     // Go to friend ContactView
-                    ContactView(contact: $agoraRTMVM.listOfContacts[index], ownerID: agoraRTMVM.userID)
+                    ContactDetailView(contact: $agoraRTMVM.listOfContacts[index], ownerID: agoraRTMVM.userID, path: $path)
                         .environmentObject(agoraRTMVM)
                 }
         

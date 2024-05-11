@@ -16,13 +16,24 @@ struct Contact: Codable {
     var title: String = ""
     var description: String = ""
     var avatar: String  = "avatar_default"
+    
+    // We use this to compare two objects for ContactDetailView saving action
+    func isEqual(to other: Contact) -> Bool {
+        return userID == other.userID &&
+               name == other.name &&
+               gender == other.gender &&
+               company == other.company &&
+               title == other.title &&
+               description == other.description &&
+               avatar == other.avatar
+    }
 }
 
 enum Gender: String, Codable, CaseIterable {
-    case male = "male"
-    case female = "female"
-    case transgender = "transgender"
-    case nonbinary = "non-binary/non-conforming"
-    case prefernoresponse = "prefer not to response"
+    case male = "Male"
+    case female = "Female"
+    case transgender = "Transgender"
+    case nonbinary = "Non-binary/non-conforming"
+    case prefernoresponse = "Prefer not to response"
 }
 

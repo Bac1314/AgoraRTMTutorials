@@ -18,7 +18,7 @@
 		29BD81D92BECD46000E251AF /* Configurations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29BD81D82BECD46000E251AF /* Configurations.swift */; };
 		29BD81DC2BECD4F500E251AF /* CustomGlobal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29BD81DB2BECD4F500E251AF /* CustomGlobal.swift */; };
 		29BD81E02BEDC41400E251AF /* Contact.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29BD81DF2BEDC41400E251AF /* Contact.swift */; };
-		29BD81E22BEDC44000E251AF /* ContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29BD81E12BEDC44000E251AF /* ContactView.swift */; };
+		29BD81E22BEDC44000E251AF /* ContactDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29BD81E12BEDC44000E251AF /* ContactDetailView.swift */; };
 		29BD81E42BEDCEEB00E251AF /* ContactsListItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29BD81E32BEDCEEB00E251AF /* ContactsListItemView.swift */; };
 		29BD81E82BEF487C00E251AF /* CustomViewModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29BD81E72BEF487C00E251AF /* CustomViewModifiers.swift */; };
 /* End PBXBuildFile section */
@@ -50,7 +50,7 @@
 		29BD81D82BECD46000E251AF /* Configurations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Configurations.swift; sourceTree = "<group>"; };
 		29BD81DB2BECD4F500E251AF /* CustomGlobal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomGlobal.swift; sourceTree = "<group>"; };
 		29BD81DF2BEDC41400E251AF /* Contact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Contact.swift; sourceTree = "<group>"; };
-		29BD81E12BEDC44000E251AF /* ContactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactView.swift; sourceTree = "<group>"; };
+		29BD81E12BEDC44000E251AF /* ContactDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactDetailView.swift; sourceTree = "<group>"; };
 		29BD81E32BEDCEEB00E251AF /* ContactsListItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsListItemView.swift; sourceTree = "<group>"; };
 		29BD81E72BEF487C00E251AF /* CustomViewModifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomViewModifiers.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -112,7 +112,7 @@
 				29BD81D22BECCE2F00E251AF /* LoginView.swift */,
 				29BD81D42BECCE3D00E251AF /* ContactsListView.swift */,
 				29BD81E32BEDCEEB00E251AF /* ContactsListItemView.swift */,
-				29BD81E12BEDC44000E251AF /* ContactView.swift */,
+				29BD81E12BEDC44000E251AF /* ContactDetailView.swift */,
 				29BD81E62BEF484500E251AF /* CustomViews */,
 			);
 			path = Views;
@@ -236,7 +236,7 @@
 				29BD81E42BEDCEEB00E251AF /* ContactsListItemView.swift in Sources */,
 				29BD81D92BECD46000E251AF /* Configurations.swift in Sources */,
 				29BD81E82BEF487C00E251AF /* CustomViewModifiers.swift in Sources */,
-				29BD81E22BEDC44000E251AF /* ContactView.swift in Sources */,
+				29BD81E22BEDC44000E251AF /* ContactDetailView.swift in Sources */,
 				29BD81D32BECCE2F00E251AF /* LoginView.swift in Sources */,
 				29BD81D52BECCE3D00E251AF /* ContactsListView.swift in Sources */,
 				2974458E2BECC6F600FA3835 /* AgoraRTMViewModel.swift in Sources */,

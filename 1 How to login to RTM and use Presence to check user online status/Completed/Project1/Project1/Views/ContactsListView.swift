@@ -25,7 +25,7 @@ struct ContactsListView: View {
             }
             .padding()
             
-            // MARK: SHow friends contact
+            // MARK: Show friends contact
             VStack(alignment: .leading) {
                 Text("Online Friends")
                 ForEach(agoraRTMVM.listOfContacts, id: \.userID) { contact in

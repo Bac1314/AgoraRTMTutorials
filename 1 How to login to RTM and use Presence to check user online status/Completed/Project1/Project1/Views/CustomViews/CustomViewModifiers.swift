@@ -9,14 +9,16 @@ import SwiftUI
 
 
 struct CustomRectangleOutline: ViewModifier {
+    @Binding var isEditing: Bool
+    
     func body(content: Content) -> some View {
         content
             .textFieldStyle(.plain)
             .font(.headline)
-            .padding(12)
+            .padding(isEditing ? 12 : 0)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(Color.gray, lineWidth: 1.0)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color.gray, lineWidth: isEditing ? 1.0 : 0.0)
             )
     }
 }
