@@ -43,7 +43,6 @@
 		2974457E2BECC67B00FA3835 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		297445812BECC67B00FA3835 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2974458D2BECC6F600FA3835 /* AgoraRTMViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgoraRTMViewModel.swift; sourceTree = "<group>"; };
-		297445902BECCBCD00FA3835 /* AgoraRtmKit.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = AgoraRtmKit.xcframework; path = "../../../0 Libraries/AgoraRtmKit.xcframework"; sourceTree = "<group>"; };
 		29BD81CE2BECCD6E00E251AF /* AgoraRtmKit.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = AgoraRtmKit.xcframework; path = ../../../0_Libraries/AgoraRtmKit.xcframework; sourceTree = "<group>"; };
 		29BD81D22BECCE2F00E251AF /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		29BD81D42BECCE3D00E251AF /* ContactsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsListView.swift; sourceTree = "<group>"; };
@@ -139,7 +138,6 @@
 			isa = PBXGroup;
 			children = (
 				29BD81CE2BECCD6E00E251AF /* AgoraRtmKit.xcframework */,
-				297445902BECCBCD00FA3835 /* AgoraRtmKit.xcframework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";

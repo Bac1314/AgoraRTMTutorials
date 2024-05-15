@@ -13,7 +13,8 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
     var agoraRtmKit: AgoraRtmClientKit? = nil
     @AppStorage("userID") var userID: String = ""
     @Published var isLoggedIn: Bool = false
-    @Published var listOfContacts : [Contact] = []
+    @Published var listOfContacts : [Contact] = [] // Including friends and strangers (differentiate with the friend parameter
+    @Published var friendList: [String] = []
     
     let rootChannel: String = "rootChannel"
     let contactKey: String = "contactKey"
@@ -40,7 +41,12 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
                     await MainActor.run {
                         isLoggedIn = true
                     }
-                    let _ = await subscribeMainChannel()
+                    
+                    let _ = await fetchAllStorageContacts() // Get your contact and friend contact info from storage usermetadata
+                    if let _ = listOfContacts.firstIndex(where: {$0.userID == userID}) {
+                        let _ = await setUserPresenceProfile(savetoStorage: false) // Set the userprofile from storage usermetadata to presence userstates
+                    }
+                    let _ = await subscribeMainChannel() // Subscribe to rootchannel to listen for presence callbacks
                     
                 }else{
                     await agoraRtmKit?.logout()
@@ -48,7 +54,7 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
                 }
             } else {
                 throw customError.loginRTMError
-   
+                
             }
             
         }catch {
@@ -64,12 +70,13 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
         agoraRtmKit = nil
         isLoggedIn = false
         listOfContacts.removeAll()
+        friendList.removeAll()
     }
     
     // MARK: Subscribe to one main channel to receive user online status
     func subscribeMainChannel() async -> Bool {
         let subOptions: AgoraRtmSubscribeOptions = AgoraRtmSubscribeOptions()
-        subOptions.features =  [.presence, .metadata] // MARK: NEED TO ADD METADATA
+        subOptions.features =  [.presence]
         
         if let (_, error) = await agoraRtmKit?.subscribe(channelName: rootChannel, option: subOptions){
             if error == nil {
@@ -83,33 +90,41 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
         return false
     }
     
-    
-    
-    // MARK: Save Contact to Presence
-    func saveContact() async -> Bool {
+    // MARK: Save Contact to Presence storage (temporary data)
+    // changed from saveContact --> setUserPresenceProfile
+    func setUserPresenceProfile(savetoStorage: Bool = true) async -> Bool {
+        if let currentUserContact = listOfContacts.first(where: {$0.userID == userID}) {
+            if let jsonString = convertOBJECTtoJSONString(object: currentUserContact) {
+                // Setup Agora Presence Item
+                let item = AgoraRtmStateItem()
+                item.key = contactKey
+                item.value = jsonString
+                
+                // Update and publish contact info
+                if let (_, error) = await agoraRtmKit?.getPresence()?.setState(channelName: rootChannel, channelType: .message, items: [item]){
+                    if error == nil {
+                        // Update the local user data to storage
+                        if savetoStorage {
+                            await saveContactToStorage(contact: currentUserContact)
+                        }
+                        return true
+                    }
+                }
+            }
+        }
         
-//        if let jsonString = convertOBJECTtoJSONString(object: listOfContacts.first(where: {$0.userID == userID})) {
-//            // MARK: Setup Agora Presence Item
-//            let item = AgoraRtmStateItem()
-//            item.key = contactKey
-//            item.value = jsonString
-//
-//            // Update and publish contact info
-//            if let (_, error) = await agoraRtmKit?.getPresence()?.setState(channelName: rootChannel, channelType: .message, items: [item]){
-//                if error == nil {
-//                    return true
-//                }
-//            }
-//         }
-            
-//        if let jsonString = convertOBJECTtoJSONString(object: listOfContacts.first(where: {$0.userID == userID})) {
-
-        if let jsonString = convertOBJECTtoJSONString(object: listOfContacts) {
+        
+        return false
+    }
+    
+    // MARK: Save a single contact to STORAGE User Metadata (Permanent Data)
+    func saveContactToStorage(contact: Contact) async {
+        if let jsonString = convertOBJECTtoJSONString(object: contact) {
             // MARK: Setup Agora Metadata item
-            guard let metaData: AgoraRtmMetadata = agoraRtmKit?.getStorage()?.createMetadata() else { return false }
+            guard let metaData: AgoraRtmMetadata = agoraRtmKit?.getStorage()?.createMetadata() else { return }
             
             let metaDataItem: AgoraRtmMetadataItem = AgoraRtmMetadataItem()
-            metaDataItem.key = contactKey
+            metaDataItem.key = "\(contactKey)_\(contact.userID)" // e.g. key = contactKey_Bac
             metaDataItem.value = jsonString
             metaData.setMetadataItem(metaDataItem)
             
@@ -121,19 +136,90 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
             
             if let (_, error) = await agoraRtmKit?.getStorage()?.setUserMetadata(userId: userID, data: metaData, options: metaDataOption){
                 if error == nil {
-                    print("Bac's saveContact success")
-                
-                    return true
+                    print("Save saveContactToStorage success \(jsonString)")
                 }else{
-                    print("Bac's saveContact failed \(error)")
-
+                    // Save failed
+                    print("Save saveContactToStorage failed \(jsonString)")
+                    
                 }
             }
-
         }
-        print("Bac's saveContact false")
-
+        
+    }
+    
+    // MARK: Remove a single contact from STORAGE User Metadata
+    func deleteContactFromStorage(contact: Contact) async {
+        // MARK: Setup Agora Metadata item
+        guard let metaData: AgoraRtmMetadata = agoraRtmKit?.getStorage()?.createMetadata() else { return }
+        
+        let metaDataItem: AgoraRtmMetadataItem = AgoraRtmMetadataItem()
+        metaDataItem.key = "\(contactKey)_\(contact.userID)" // e.g. key = contactKey_Bac
+        metaData.setMetadataItem(metaDataItem)
+        
+        // Metadata options
+        let metaDataOption: AgoraRtmMetadataOptions = AgoraRtmMetadataOptions()
+        metaDataOption.recordUserId = true
+        metaDataOption.recordTs = true
+        
+        if let (_, error) = await agoraRtmKit?.getStorage()?.removeUserMetadata(userId: userID, data: metaData, options: metaDataOption){
+            if error == nil {
+                print("Save removeContactFromStorage success ")
+            }else{
+                // Save failed
+                print("Save removeContactFromStorage failed ")
+                
+            }
+        }
+    }
+    
+    // MARK: Fetch all contacts from STORAGE User metadata
+    @MainActor
+    func fetchAllStorageContacts() async -> Bool{
+        // Clear the list first
+        listOfContacts.removeAll()
+        friendList.removeAll()
+        
+        if let (response, error) = await agoraRtmKit?.getStorage()?.getUserMetadata(userId: userID) {
+            if error == nil {
+                for key in response?.data?.getItems() ?? [] {
+                    if let savedContact = convertJSONStringToOBJECT(jsonString: key.value, objectType: Contact.self) {
+                        var newSavedContact = savedContact
+                        newSavedContact.online = newSavedContact.userID == userID ? true : false // all saved friends would be offline, we'll change it from the didReceivePresenceEvent callback
+                        listOfContacts.append(newSavedContact)
+                        if newSavedContact.userID != userID {
+                            friendList.append(newSavedContact.userID)
+                            print("bac's friendlist \(friendList)")
+                        }
+                    }
+                }
+                return true
+            }
+        }
         return false
+    }
+    
+    // MARK: Add friend
+    func addAsFriend(contact: Contact){
+        Task {
+            await MainActor.run {
+                if !friendList.contains(contact.userID) {
+                    friendList.append(contact.userID)
+                }
+            }
+            await saveContactToStorage(contact: contact)
+        }
+    }
+    
+    // MARK: Remove friend
+    func removeFriend(contact: Contact){
+        Task {
+            await MainActor.run {
+                if friendList.contains(contact.userID) {
+                    friendList.removeAll(where: {$0.self == contact.userID})
+                }
+            }
+            await deleteContactFromStorage(contact: contact)
+        }
     }
 }
 
@@ -144,74 +230,85 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
         if event.type == .remoteLeaveChannel || event.type == .remoteConnectionTimeout {
             // A remote user left the channel
             if let userIndex = listOfContacts.firstIndex(where: {$0.userID == event.publisher}) {
-                listOfContacts.remove(at: userIndex)
+                if friendList.contains(listOfContacts[userIndex].userID) {
+                    listOfContacts[userIndex].online = false
+                }else {
+                    listOfContacts.remove(at: userIndex)
+                }
             }
         }else if event.type == .remoteJoinChannel && event.publisher != nil {
             // A remote user join/subscribe the channel
-            
-            if !listOfContacts.contains(where: {$0.userID == event.publisher}) && event.publisher != nil {
+            // If user doesn't exist in list, add the contact, else update
+            if let userIndex = listOfContacts.firstIndex(where: {$0.userID == event.publisher}){
+                listOfContacts[userIndex].online = true
+            }else {
                 let newContact = Contact(userID: event.publisher!)
                 listOfContacts.append(newContact)
             }
             
+            
         }else if event.type == .snapshot {
             // Get a snapshot of all the subscribed users' 'presence' data (aka temporary profile key-value pairs)
             // Add users to list from snapshop
+            print("Bac's snapshot ")
             for event in event.snapshot {
-                
-                // Create default contact
-                var newContact = Contact(userID: event.userId)
-
-                // Check if user contact info exists on RTM PRESENCE storage
-                if let newContactJSONString = event.states.first(where: {$0.key == contactKey})?.value {
-                    if let newContactDetails = convertJSONStringToOBJECT(jsonString: newContactJSONString, objectType: Contact.self) {
-                        newContact = newContactDetails
+                // Check if user exists in the listOfContacts
+                if let userIndex = listOfContacts.firstIndex(where: {$0.userID == event.userId}) {
+                    // User exists, check if remote user updated their contact
+                    //                    let newContact =  Contact(userID: event.userId, online: true)
+                    if let newContactJSONString = event.states.first(where: {$0.key == contactKey})?.value {
+                        if let newContactDetails = convertJSONStringToOBJECT(jsonString: newContactJSONString, objectType: Contact.self) {
+                            let newContact = newContactDetails
+                            
+                            // Remote user updated their profile
+                            if !newContact.isEqual(to: listOfContacts[userIndex]){
+                                Task {
+                                    await MainActor.run {
+                                        listOfContacts[userIndex] = newContact
+                                    }
+                                    await saveContactToStorage(contact: newContact)
+                                }
+                            }
+                            
+                            
+                        }
+                    }
+                    
+                    listOfContacts[userIndex].online = true
+                    
+                }else {
+                    // User doesn't exists, add to list
+                    Task {
+                        await MainActor.run {
+                            var newContact =  Contact(userID: event.userId, online: true)
+                            if let newContactJSONString = event.states.first(where: {$0.key == contactKey})?.value {
+                                if let newContactDetails = convertJSONStringToOBJECT(jsonString: newContactJSONString, objectType: Contact.self) {
+                                    newContact = newContactDetails
+                                    newContact.online = true
+                                }
+                            }
+                            listOfContacts.append(newContact)
+                        }
                     }
                 }
                 
-                // Add to list
-                listOfContacts.append(newContact)
-
             }
+            
         }else if event.type == .remoteStateChanged {
             // A remote user's 'presence' data was changed aka user edited their profile key-value pairs
             if let userIndex = listOfContacts.firstIndex(where: {$0.userID == event.publisher}), let newContactJSONString = event.states.first(where: {$0.key == contactKey})?.value, let publisher = event.publisher{
                 listOfContacts[userIndex] = convertJSONStringToOBJECT(jsonString: newContactJSONString, objectType: Contact.self) ?? Contact(userID: publisher, name: publisher)
+                
+                // Check if it's friend
+                if friendList.contains(listOfContacts[userIndex].userID) {
+                    // Save new friend data to user metadata
+                    Task {
+                        await saveContactToStorage(contact: listOfContacts[userIndex])
+                    }
+                }
             }
         }
-    }
-    
-    // Receive storage event
-    func rtmKit(_ rtmKit: AgoraRtmClientKit, didReceiveStorageEvent event: AgoraRtmStorageEvent) {
-        print("Bac's didReceiveStorageEvent updated \(event.eventType) storageType \(event.storageType)")
-
-        if event.storageType == .channel {
-            // Channel Metadata is udpated
-            print("Bac's didReceiveStorageEvent updated \(event.eventType)")
-            
-            switch event.eventType {
-            case .snapshot:
-                // snapshot: get the user snapshot
-
-                break
-            case .update:
-                // update: metadata is updated e.g. remote user updated their profile
-
-                break
-            case .set:
-                // update: metadata is set e.g. remote user save their profile
-
-                break
-            case .none:
-                break
-            case .remove:
-                // remove: metadata is removed e.g. user deleted their profile data
-
-                break
-            @unknown default:
-                break
-            }
-            
-        }
+        
     }
 }
+

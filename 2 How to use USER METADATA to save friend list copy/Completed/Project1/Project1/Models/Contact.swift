@@ -16,6 +16,7 @@ struct Contact: Codable {
     var title: String = ""
     var description: String = ""
     var avatar: String  = "avatar_default"
+    var online: Bool = false // to show if users are online or not
     
     // We use this to compare two objects for ContactDetailView saving action
     func isEqual(to other: Contact) -> Bool {
@@ -26,6 +27,11 @@ struct Contact: Codable {
                title == other.title &&
                description == other.description &&
                avatar == other.avatar
+    }
+    
+    // We use this to filter the list of contacts
+    func contains(searchText: String) -> Bool{
+        return userID.lowercased().contains(searchText.lowercased()) || name.lowercased().contains(searchText.lowercased()) || company.lowercased().contains(searchText.lowercased())
     }
 }
 

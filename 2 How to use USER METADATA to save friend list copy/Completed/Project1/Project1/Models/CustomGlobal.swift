@@ -22,6 +22,11 @@ enum customError: LocalizedError {
     }
 }
 
+//enum filteredUsersType: String {
+//    case friends
+//    case all
+//}
+
 // Convert OBJECT to JSONSTRING
 func convertOBJECTtoJSONString<T: Encodable>(object: T) -> String? {
     let encoder = JSONEncoder()

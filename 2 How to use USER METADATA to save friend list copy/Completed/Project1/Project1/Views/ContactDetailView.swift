@@ -22,7 +22,6 @@ struct ContactDetailView: View {
     
     var body: some View {
         ScrollView {
-            
             // MARK: Top View
             VStack{
                 Image(temporaryContact.avatar)
@@ -181,8 +180,30 @@ struct ContactDetailView: View {
             }
             .padding(.vertical, 6)
             .padding(.horizontal, 12)
-            .padding(.bottom, 100)
             .disabled(!isEditing)
+            
+            // Button to add as friend or remove friend
+            if contact.userID != ownerID {
+                Button(action: {
+                    
+                }, label: {
+                    Text(agoraRTMVM.friendList.contains(contact.userID) ? "Remove friend" : "Add friend")
+                        .font(.headline)
+                        .foregroundStyle(Color.white)
+                        .padding()
+                        .background(agoraRTMVM.friendList.contains(contact.userID) ? Color.red : Color.accentColor)
+                        .clipShape(
+                            RoundedRectangle(cornerRadius: 16)
+                        )
+                        .onTapGesture {
+                            if agoraRTMVM.friendList.contains(contact.userID) {
+                                agoraRTMVM.removeFriend(contact: contact)
+                            }else {
+                                agoraRTMVM.addAsFriend(contact: contact)
+                            }
+                        }
+                })
+            }
             
 
         }
@@ -220,9 +241,8 @@ struct ContactDetailView: View {
                             if isEditing {
                                 // Save it
                                 Task {
-                                    print("Bac's reach here")
                                     contact = temporaryContact
-                                    let _ = await agoraRTMVM.saveContact()
+                                    let _ = await agoraRTMVM.setUserPresenceProfile()
                                 }
                             }
                             isEditing.toggle()
@@ -245,7 +265,7 @@ struct ContactDetailView: View {
             Button("Save", role: .none) {
                 Task {
                     contact = temporaryContact
-                    let _ = await agoraRTMVM.saveContact()
+                    let _ = await agoraRTMVM.setUserPresenceProfile()
                     path.removeLast()
                 }
             }
