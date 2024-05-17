@@ -31,10 +31,10 @@ struct CustomContactBtnRectangleOutline: ViewModifier {
             .bold()
             .imageScale(.large)
             .padding(5)
-            .foregroundStyle(Color.white)
+            .foregroundStyle(isActive ? Color.accentColor.opacity(0.8) : Color.gray.opacity(0.5))
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .foregroundStyle(isActive ? Color.accentColor : Color.gray.opacity(0.3))
+                    .foregroundStyle(Color.white.opacity(0.5))
                     .scaledToFit()
                     .frame(width: 50, height: 50)
             )

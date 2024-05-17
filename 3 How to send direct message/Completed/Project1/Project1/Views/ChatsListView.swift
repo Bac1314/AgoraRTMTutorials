@@ -22,15 +22,6 @@ struct ChatsListView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: customNavigateType.self) { value in
                 switch value {
-            
-                case .MainView:
-                    Text("Hello World")
-                case .LoginView:
-                    Text("Hello World")
-                case .ChatsListView:
-                    Text("Hello World")
-                case .ContactsListView:
-                    Text("Hello World")
                 case .ContactDetailView(let userName):
                     if let index = agoraRTMVM.listOfContacts.firstIndex(where: {$0.userID == userName}){
                         // Go to ContactDetailView
@@ -43,7 +34,7 @@ struct ChatsListView: View {
                 case .MessagingView(let userName):
                     if let index = agoraRTMVM.listOfContacts.firstIndex(where: {$0.userID == userName}){
                         // Go to ContactDetailView
-                        MessagingView()
+                        MessagingView(contact: $agoraRTMVM.listOfContacts[index], path: $path)
                             .environmentObject(agoraRTMVM)
                     }else {
                         Text("user not found")

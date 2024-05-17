@@ -26,7 +26,7 @@
 		29CA22472BF5B8E900014A2D /* MessageItemLocalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA22452BF5B8E900014A2D /* MessageItemLocalView.swift */; };
 		29CA22482BF5B8E900014A2D /* MessageItemRemoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA22462BF5B8E900014A2D /* MessageItemRemoteView.swift */; };
 		29CA224B2BF6048900014A2D /* MessagingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA224A2BF6048900014A2D /* MessagingView.swift */; };
-		29CA224D2BF60E8400014A2D /* NavigationClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA224C2BF60E8400014A2D /* NavigationClass.swift */; };
+		29CA224F2BF7517000014A2D /* MeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA224E2BF7517000014A2D /* MeView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -63,7 +63,7 @@
 		29CA22452BF5B8E900014A2D /* MessageItemLocalView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MessageItemLocalView.swift; sourceTree = "<group>"; };
 		29CA22462BF5B8E900014A2D /* MessageItemRemoteView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MessageItemRemoteView.swift; sourceTree = "<group>"; };
 		29CA224A2BF6048900014A2D /* MessagingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagingView.swift; sourceTree = "<group>"; };
-		29CA224C2BF60E8400014A2D /* NavigationClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationClass.swift; sourceTree = "<group>"; };
+		29CA224E2BF7517000014A2D /* MeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -123,6 +123,7 @@
 				29BD81D22BECCE2F00E251AF /* LoginView.swift */,
 				29CA22422BF4B7CD00014A2D /* ChatsListView.swift */,
 				29BD81D42BECCE3D00E251AF /* ContactsListView.swift */,
+				29CA224E2BF7517000014A2D /* MeView.swift */,
 				29CA22442BF5B75200014A2D /* ChildViews */,
 				29BD81E62BEF484500E251AF /* CustomViews */,
 			);
@@ -135,7 +136,6 @@
 				29BD81D82BECD46000E251AF /* Configurations.swift */,
 				29BD81DB2BECD4F500E251AF /* CustomGlobal.swift */,
 				29BD81DF2BEDC41400E251AF /* Contact.swift */,
-				29CA224C2BF60E8400014A2D /* NavigationClass.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -169,9 +169,9 @@
 			children = (
 				29BD81E32BEDCEEB00E251AF /* ContactsListItemView.swift */,
 				29BD81E12BEDC44000E251AF /* ContactDetailView.swift */,
+				29CA224A2BF6048900014A2D /* MessagingView.swift */,
 				29CA22452BF5B8E900014A2D /* MessageItemLocalView.swift */,
 				29CA22462BF5B8E900014A2D /* MessageItemRemoteView.swift */,
-				29CA224A2BF6048900014A2D /* MessagingView.swift */,
 			);
 			path = ChildViews;
 			sourceTree = "<group>";
@@ -251,9 +251,9 @@
 				2974457B2BECC67A00FA3835 /* Project1App.swift in Sources */,
 				29CA22472BF5B8E900014A2D /* MessageItemLocalView.swift in Sources */,
 				29BD81DC2BECD4F500E251AF /* CustomGlobal.swift in Sources */,
+				29CA224F2BF7517000014A2D /* MeView.swift in Sources */,
 				29BD81E42BEDCEEB00E251AF /* ContactsListItemView.swift in Sources */,
 				29CA22432BF4B7CD00014A2D /* ChatsListView.swift in Sources */,
-				29CA224D2BF60E8400014A2D /* NavigationClass.swift in Sources */,
 				29CA224B2BF6048900014A2D /* MessagingView.swift in Sources */,
 				29BD81D92BECD46000E251AF /* Configurations.swift in Sources */,
 				29BD81E82BEF487C00E251AF /* CustomViewModifiers.swift in Sources */,

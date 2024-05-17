@@ -9,12 +9,14 @@ import Foundation
 import UIKit
 
 enum customNavigateType : Hashable{
-    case MainView
-    case LoginView
-    case ChatsListView
-    case ContactsListView
+//    case MainView
+//    case LoginView
+//    case ChatsListView
+//    case ContactsListView
     case ContactDetailView(username: String)
     case MessagingView(username: String)
+//    case RTCCallingView(username: String)
+
 }
 
 enum customError: LocalizedError {

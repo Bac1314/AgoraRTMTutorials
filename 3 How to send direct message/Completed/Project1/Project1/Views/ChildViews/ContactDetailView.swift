@@ -19,11 +19,13 @@ struct ContactDetailView: View {
         "avatar_default", "avatar1", "avatar2", "avatar3", "avatar4", "avatar5", "avatar6", "avatar7", "avatar8", "avatar9", "avatar10", "avatar11", "avatar12", "avatar_default2"
     ]
     
+    @State var toggleing: Bool = false
+    
     var body: some View {
         ScrollView {
             // MARK: Top View
             VStack{
-                Image(temporaryContact.avatar)
+                Image(contact.avatar)
                     .resizable()
                     .frame(width: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/, height: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -32,6 +34,8 @@ struct ContactDetailView: View {
                             .imageScale(.medium)
                             .foregroundStyle(contact.online ? Color.green : Color.gray)
                             .offset(x: 8, y: -8)
+                            .symbolEffect(.bounce, options: .speed(3).repeat(3), value: contact.online)
+
                     }
                     .padding()
                     .layoutPriority(2)
@@ -39,14 +43,14 @@ struct ContactDetailView: View {
     
                 
                 
-                Text("@\(temporaryContact.userID)") // username
+                Text("@\(contact.userID)") // username
                     .foregroundStyle(Color.gray)
                     .padding(.bottom, 4)
                 
-                Text(temporaryContact.name.isEmpty ? "\(temporaryContact.userID)" : "\(temporaryContact.name)").bold()
+                Text(contact.name.isEmpty ? "\(contact.userID)" : "\(contact.name)").bold()
                     .font(.title2)
                 
-                Text("\(temporaryContact.company)\(temporaryContact.company.isEmpty || temporaryContact.title.isEmpty ? "" : " | ")\(temporaryContact.title)")
+                Text("\(contact.company)\(contact.company.isEmpty || contact.title.isEmpty ? "" : " | ")\(contact.title)")
                     .font(.subheadline)
                 
                 // Contact Buttons
@@ -88,11 +92,11 @@ struct ContactDetailView: View {
                                       .padding(4)
                                       .overlay(
                                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                            .stroke(Color.accentColor, lineWidth: temporaryContact.avatar == imageName ? 2.0 : 0.0)
+                                            .stroke(Color.accentColor, lineWidth: contact.avatar == imageName ? 2.0 : 0.0)
                                        )
                                       .onTapGesture {
                                           withAnimation {
-                                              temporaryContact.avatar = imageName
+                                              contact.avatar = imageName
                                           }
                                       }
                             }
@@ -116,25 +120,25 @@ struct ContactDetailView: View {
                         HStack(spacing: 16){
                             ForEach(Gender.allCases, id: \.self) { gender in
                                 HStack{
-                                    Image(systemName: gender == temporaryContact.gender ? "checkmark.circle.fill" : "circle")
+                                    Image(systemName: gender == contact.gender ? "checkmark.circle.fill" : "circle")
                                     Text(gender.rawValue)
                                 }
                                 .modifier(CustomRectangleOutline(isEditing: $isEditing))
                                 .onTapGesture {
                                     withAnimation {
-                                        temporaryContact.gender = gender
+                                        contact.gender = gender
                                     }
                                 }
                             }
                         }
                     }
-                }else if temporaryContact.gender != .prefernoresponse {
+                }else if contact.gender != .prefernoresponse {
                     Text("Gender")
                         .font(.subheadline)
                         .foregroundStyle(.gray)
                     
                     HStack {
-                        Text("\(temporaryContact.gender.rawValue)")
+                        Text("\(contact.gender.rawValue)")
                             .font(.headline)
                         Spacer()
                     }
@@ -152,7 +156,7 @@ struct ContactDetailView: View {
                     .font(.subheadline)
                     .foregroundStyle(.gray)
                 
-                TextField("", text: $temporaryContact.name)
+                TextField("", text: $contact.name)
                     .modifier(CustomRectangleOutline(isEditing: $isEditing))
             }
             .padding(.vertical, 6)
@@ -165,7 +169,7 @@ struct ContactDetailView: View {
                     .font(.subheadline)
                     .foregroundStyle(.gray)
                 
-                TextField("", text: $temporaryContact.company)
+                TextField("", text: $contact.company)
                     .modifier(CustomRectangleOutline(isEditing: $isEditing))
             }
             .padding(.vertical, 6)
@@ -178,7 +182,7 @@ struct ContactDetailView: View {
                     .font(.subheadline)
                     .foregroundStyle(.gray)
                 
-                TextField("", text: $temporaryContact.title)
+                TextField("", text: $contact.title)
                     .modifier(CustomRectangleOutline(isEditing: $isEditing))
                 
             }
@@ -187,13 +191,13 @@ struct ContactDetailView: View {
             .disabled(!isEditing)
             
             // DESCRIPTION
-            if isEditing || (!isEditing && !temporaryContact.description.isEmpty) {
+            if isEditing || (!isEditing && !contact.description.isEmpty) {
                 VStack(alignment: .leading, spacing: 6){
                     Text("Description")
                         .font(.subheadline)
                         .foregroundStyle(.gray)
                     
-                    TextEditor(text: $temporaryContact.description)
+                    TextEditor(text: $contact.description)
                         .lineLimit(3)
                         .frame(minHeight: 80)
                         .modifier(CustomRectangleOutline(isEditing: $isEditing))
@@ -227,7 +231,7 @@ struct ContactDetailView: View {
             
 
         }
-        .toolbar(.hidden, for: .tabBar)
+        .toolbar(contact.userID != agoraRTMVM.userID ? .hidden : .visible, for: .tabBar)
         .onAppear(perform: {
             temporaryContact = contact
         })
@@ -237,49 +241,65 @@ struct ContactDetailView: View {
         .navigationTitle("")
         .toolbar{
             // Back button
-            ToolbarItem(placement: .topBarLeading) {
-                Button(action : {
-                    if contact.isEqual(to: temporaryContact) {
-                        path.removeLast()
-                    }else {
-                        withAnimation {
-                            showAlert.toggle()
+            
+            if contact.userID != agoraRTMVM.userID {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(action : {
+                        if contact.isEqual(to: temporaryContact) {
+                            path.removeLast()
+                        }else {
+                            withAnimation {
+                                showAlert.toggle()
+                            }
                         }
-                    }
-                }){
-                    HStack{
-                        Image(systemName: "arrow.left")
-                        Text("Back")
+                    }){
+                        HStack{
+                            Image(systemName: "arrow.left")
+                            Text("Back")
+                        }
                     }
                 }
             }
             
-            ToolbarItem(placement: .topBarTrailing) {
-                // Edit button
-                if temporaryContact.userID == agoraRTMVM.userID {
+            else if contact.userID == agoraRTMVM.userID {
+                ToolbarItem(placement: .topBarLeading) {
                     Button(action : {
                         withAnimation {
-                            if isEditing {
-                                // Save it
-                                Task {
-                                    contact = temporaryContact
-                                    let _ = await agoraRTMVM.setUserPresenceProfile()
-                                }
-                            }
-                            isEditing.toggle()
+                            agoraRTMVM.logoutRTM()
                         }
                     }){
                         HStack{
-//                            Image(systemName:  isEditing ? "square.and.arrow.down" : "pencil")
-                            Text(isEditing ? "Save" : "Edit")
-                                .bold()
-                                .disabled(isEditing && contact.isEqual(to: temporaryContact))
+                            Text("Logout")
+                                .foregroundStyle(Color.red)
                         }
-                        .padding(12)
                     }
                 }
                 
+                ToolbarItem(placement: .topBarTrailing) {
+                    // Edit button
+                        Button(action : {
+                            withAnimation {
+                                if isEditing {
+                                    // Save it
+                                    Task {
+                                        contact = temporaryContact
+                                        let _ = await agoraRTMVM.setUserPresenceProfile()
+                                    }
+                                }
+                                isEditing.toggle()
+                            }
+                        }){
+                            HStack{
+                                Text(isEditing ? "Save" : "Edit")
+                                    .bold()
+                                    .disabled(isEditing && contact.isEqual(to: temporaryContact))
+                            }
+                            .padding(12)
+                        }
+                    
+                }
             }
+
         }
         .alert("Unsave changes", isPresented: $showAlert) {
             

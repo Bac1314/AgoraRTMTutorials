@@ -12,7 +12,6 @@ struct LoginView: View {
     @State var isLoading : Bool = false
     
     var body: some View {
-        ZStack{
             VStack(alignment: .center, spacing: 6){
                 Image(agoraRTMVM.userAvatar)
                     .resizable()
@@ -56,17 +55,14 @@ struct LoginView: View {
                         .stroke(Color.gray, lineWidth: 1.0)
                 )
             }
-
-        }
-        .padding()
-        .overlay {
-            // MARK: Loading Icon
-            if isLoading {
-                ProgressView()
-                    .scaleEffect(CGSize(width: 3.0, height: 3.0))
+            .padding()
+            .overlay {
+                // MARK: Loading Icon
+                if isLoading {
+                    ProgressView()
+                        .scaleEffect(CGSize(width: 3.0, height: 3.0))
+                }
             }
-        }
-        
     }
 }
 

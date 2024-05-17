@@ -17,31 +17,32 @@ struct ContactsListView: View {
         NavigationStack(path: $path) {
             VStack(alignment: .leading){
                 // MARK: Show your contact
-                VStack(alignment: .leading) {
-                    Text("Me")
-                        .font(.headline)
-                    
-                    if let contactMe = agoraRTMVM.listOfContacts.first(where: {$0.userID == agoraRTMVM.userID}) {
-                        if (searchText.isEmpty ||  contactMe.contains(searchText: searchText)) {
-                            ContactsListItemView(contact: contactMe, isFriend: agoraRTMVM.friendList.contains(contactMe.userID))
-                                .onTapGesture {
-                                    path.append(customNavigateType.ContactDetailView(username: contactMe.userID))
-                                }
-                        }
-                    }
-                }
-                .padding()
+//                VStack(alignment: .leading) {
+//                    Text("Me")
+//                        .font(.headline)
+//                    
+//                    if let contactMe = agoraRTMVM.listOfContacts.first(where: {$0.userID == agoraRTMVM.userID}) {
+//                        if (searchText.isEmpty ||  contactMe.contains(searchText: searchText)) {
+//                            ContactsListItemView(contact: contactMe, isFriend: agoraRTMVM.friendList.contains(contactMe.userID))
+//                                .onTapGesture {
+//                                    path.append(customNavigateType.ContactDetailView(username: contactMe.userID))
+//                                }
+//                        }
+//                    }
+//                }
+//                .padding()
                 
                 // MARK: Show friends contact
                 VStack(alignment: .leading) {
                     HStack{
-                        Text("Users")
-                            .font(.headline)
-                        Spacer()
+//                        Text("Users")
+//                            .font(.headline)
+//                        Spacer()
                         Picker(selection: $showFriendsOnly, label: Text("")) {
                             Text("Friends Only").tag(true)
                             Text("All Online Users").tag(false)
                         }
+                        .pickerStyle(.segmented)
                     }
                     
                     List {
@@ -82,7 +83,7 @@ struct ContactsListView: View {
                         Text("\(agoraRTMVM.friendList.count) friends, \(agoraRTMVM.listOfContacts.filter({$0.online && agoraRTMVM.friendList.contains($0.userID)}).count) online")
                             .foregroundStyle(Color.gray)
                     }else {
-                        Text("\(agoraRTMVM.listOfContacts.filter({$0.online}).count) online")
+                        Text("\(agoraRTMVM.listOfContacts.filter({$0.online}).count-1) online")
                             .foregroundStyle(Color.gray)
                     }
                     Spacer()
@@ -94,15 +95,6 @@ struct ContactsListView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: customNavigateType.self) { value in
                 switch value {
-            
-                case .MainView:
-                    Text("Hello World")
-                case .LoginView:
-                    Text("Hello World")
-                case .ChatsListView:
-                    Text("Hello World")
-                case .ContactsListView:
-                    Text("Hello World")
                 case .ContactDetailView(let userName):
                     if let index = agoraRTMVM.listOfContacts.firstIndex(where: {$0.userID == userName}){
                         // Go to ContactDetailView
@@ -115,7 +107,7 @@ struct ContactsListView: View {
                 case .MessagingView(let userName):
                     if let index = agoraRTMVM.listOfContacts.firstIndex(where: {$0.userID == userName}){
                         // Go to ContactDetailView
-                        MessagingView()
+                        MessagingView(contact: $agoraRTMVM.listOfContacts[index], path: $path)
                             .environmentObject(agoraRTMVM)
                     }else {
                         Text("user not found")
