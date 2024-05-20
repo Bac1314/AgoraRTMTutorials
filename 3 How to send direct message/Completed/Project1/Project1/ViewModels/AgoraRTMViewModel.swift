@@ -15,7 +15,8 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
     @AppStorage("userAvatar") var userAvatar: String = "avatar_default" // Only used for displaying avatar on login page
     @Published var isLoggedIn: Bool = false
     @Published var listOfContacts : [Contact] = [] // Including friends and strangers (differentiate with the friend parameter
-    @Published var friendList: [String] = []
+    @Published var friendList: [Contact] = []
+    @Published var messages : [CustomMessage] = []
     
     let rootChannel: String = "rootChannel"
     let contactKey: String = "contactKey"
@@ -49,6 +50,7 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
                     }
                     let _ = await subscribeMainChannel() // Subscribe to rootchannel to listen for presence callbacks
                     
+                    try await loadMessagesFromLocalStorage() // Load messages from local database
                 }else{
                     await agoraRtmKit?.logout()
                     throw error ?? customError.loginRTMError
@@ -193,7 +195,7 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
                         newSavedContact.online = newSavedContact.userID == userID ? true : false // all saved friends would be offline, we'll change it from the didReceivePresenceEvent callback
                         listOfContacts.append(newSavedContact)
                         if newSavedContact.userID != userID {
-                            friendList.append(newSavedContact.userID)
+                            friendList.append(newSavedContact)
                             print("bac's friendlist \(friendList)")
                         }
                     }
@@ -208,8 +210,8 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
     func addAsFriend(contact: Contact){
         Task {
             await MainActor.run {
-                if !friendList.contains(contact.userID) {
-                    friendList.append(contact.userID)
+                if !friendList.contains(where: { $0.userID == contact.userID}) {
+                    friendList.append(contact)
                 }
             }
             await saveContactToStorage(contact: contact)
@@ -220,12 +222,72 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
     func removeFriend(contact: Contact){
         Task {
             await MainActor.run {
-                if friendList.contains(contact.userID) {
-                    friendList.removeAll(where: {$0.self == contact.userID})
-                }
+                friendList.removeAll(where: {$0.userID == contact.userID})
             }
             await deleteContactFromStorage(contact: contact)
         }
+    }
+    
+    
+    // MARK: Publish message
+    func publishToUser(userName: String, messageString: String, customType: String?) async -> Bool{
+        let pubOptions = AgoraRtmPublishOptions()
+        pubOptions.customType = customType ?? ""
+        pubOptions.channelType = .user
+        
+        if let (_, error) = await agoraRtmKit?.publish(channelName: userName, message: messageString, option: pubOptions){
+            if error == nil {
+                // MARK: if success, create a local message event for display (bc callback doesn't fire for local send)
+                await MainActor.run {
+                    let customMessage = CustomMessage(id: UUID(), message: messageString, sender: userID, receiver: userName, lastUpdated: Date())
+                    messages.append(customMessage)
+                }
+                try? await saveMessagesToLocalStorage(messages: messages)
+                return true
+            }else{
+                print("Bac's sendMessageToChannel error \(String(describing: error))")
+                return false
+            }
+            
+        }
+        return false
+    }
+    
+    private static func fileURL() throws -> URL {
+        try FileManager.default.url(for: .documentDirectory,
+                                    in: .userDomainMask,
+                                    appropriateFor: nil,
+                                    create: false)
+        .appendingPathComponent("rtmMessages.data")
+    }
+
+
+    func loadMessagesFromLocalStorage() async throws {
+        let task = Task<[CustomMessage], Error> {
+            let fileURL = try Self.fileURL()
+            guard let data = try? Data(contentsOf: fileURL) else {
+                return []
+            }
+            let customMessages = try JSONDecoder().decode([CustomMessage].self, from: data)
+            return customMessages
+        }
+        let loadedMessages = try await task.value
+        
+        Task {
+            await MainActor.run {
+                self.messages = loadedMessages
+            }
+        }
+    }
+
+
+    func saveMessagesToLocalStorage(messages: [CustomMessage]) async throws {
+        let task = Task {
+            let data = try JSONEncoder().encode(messages)
+            let outfile = try Self.fileURL()
+            try data.write(to: outfile)
+        }
+        _ = try await task.value
     }
 }
 
@@ -236,7 +298,7 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
         if event.type == .remoteLeaveChannel || event.type == .remoteConnectionTimeout {
             // A remote user left the channel
             if let userIndex = listOfContacts.firstIndex(where: {$0.userID == event.publisher}) {
-                if friendList.contains(listOfContacts[userIndex].userID) {
+                if friendList.contains(where: { $0.userID == listOfContacts[userIndex].userID}) {
                     listOfContacts[userIndex].online = false
                 }else {
                     listOfContacts.remove(at: userIndex)
@@ -306,7 +368,7 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
                 listOfContacts[userIndex] = convertJSONStringToOBJECT(jsonString: newContactJSONString, objectType: Contact.self) ?? Contact(userID: publisher, name: publisher)
                 
                 // Check if it's friend
-                if friendList.contains(listOfContacts[userIndex].userID) {
+                if friendList.contains(where: { $0.userID == listOfContacts[userIndex].userID}) {
                     // Save new friend data to user metadata
                     Task {
                         await saveContactToStorage(contact: listOfContacts[userIndex])
@@ -315,6 +377,40 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
             }
         }
         
+    }
+    
+    // Receive message event notifications in subscribed message channels and subscribed topics.
+    func rtmKit(_ rtmKit: AgoraRtmClientKit, didReceiveMessageEvent event: AgoraRtmMessageEvent) {
+   
+        switch event.channelType {
+        case .message:
+            break
+        case .stream:
+            break
+        case .user:
+            Task {
+                await MainActor.run {
+                    withAnimation {
+                        let customMessage = CustomMessage(id: UUID(), message: event.message.stringData ?? "", sender: event.publisher, receiver: userID, lastUpdated: Date())
+
+                        messages.append(customMessage)
+
+                        // Move Contact to the top
+                        if let contactIndex = listOfContacts.firstIndex(where: {$0.userID == event.publisher}) {
+                            let contact = listOfContacts.remove(at: contactIndex)
+                            listOfContacts.insert(contact, at: 0)
+                        }
+                    }
+
+                }
+                try? await saveMessagesToLocalStorage(messages: messages)
+            }
+            break
+        case .none:
+            break
+        @unknown default:
+            print("Bac's didReceiveMessageEvent channelType is unknown")
+        }
     }
 }
 

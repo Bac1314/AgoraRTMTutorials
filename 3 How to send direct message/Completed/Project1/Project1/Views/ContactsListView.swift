@@ -16,22 +16,7 @@ struct ContactsListView: View {
     var body: some View {
         NavigationStack(path: $path) {
             VStack(alignment: .leading){
-                // MARK: Show your contact
-//                VStack(alignment: .leading) {
-//                    Text("Me")
-//                        .font(.headline)
-//                    
-//                    if let contactMe = agoraRTMVM.listOfContacts.first(where: {$0.userID == agoraRTMVM.userID}) {
-//                        if (searchText.isEmpty ||  contactMe.contains(searchText: searchText)) {
-//                            ContactsListItemView(contact: contactMe, isFriend: agoraRTMVM.friendList.contains(contactMe.userID))
-//                                .onTapGesture {
-//                                    path.append(customNavigateType.ContactDetailView(username: contactMe.userID))
-//                                }
-//                        }
-//                    }
-//                }
-//                .padding()
-                
+
                 // MARK: Show friends contact
                 VStack(alignment: .leading) {
                     HStack{
@@ -45,17 +30,17 @@ struct ContactsListView: View {
                         .pickerStyle(.segmented)
                     }
                     
+
                     List {
                         ForEach(agoraRTMVM.listOfContacts.filter { contact in
                             return contact.userID != agoraRTMVM.userID
                             && (searchText.isEmpty || contact.contains(searchText: searchText))
-                            && (showFriendsOnly == true ? agoraRTMVM.friendList.contains(contact.userID) : false
+                            && (showFriendsOnly == true ? agoraRTMVM.friendList.contains(where: { $0.userID == contact.userID}) : false
                                 || showFriendsOnly == false ? contact.online : false)
                         }, id: \.userID) { contact in
-                            ContactsListItemView(contact: contact, isFriend: agoraRTMVM.friendList.contains(contact.userID))
-                                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                            ContactsListItemView(contact: contact, isFriend: agoraRTMVM.friendList.contains(where: { $0.userID == contact.userID}))
                                 .swipeActions(edge: .trailing) {
-                                    if agoraRTMVM.friendList.contains(contact.userID) {
+                                    if agoraRTMVM.friendList.contains(where: { $0.userID == contact.userID}) {
                                         Button(role: .destructive) {
                                             Task {agoraRTMVM.removeFriend(contact:contact) }} label: { Text("Remove friend") }
                                     }else {
@@ -75,12 +60,11 @@ struct ContactsListView: View {
                 .padding()
                 
                 Spacer()
-                
                 // Footer: Show number friends
                 HStack(alignment: .center){
                     Spacer()
                     if showFriendsOnly {
-                        Text("\(agoraRTMVM.friendList.count) friends, \(agoraRTMVM.listOfContacts.filter({$0.online && agoraRTMVM.friendList.contains($0.userID)}).count) online")
+                        Text("\(agoraRTMVM.friendList.count) friends, \(                agoraRTMVM.friendList.filter({ $0.online == true}).count) online")
                             .foregroundStyle(Color.gray)
                     }else {
                         Text("\(agoraRTMVM.listOfContacts.filter({$0.online}).count-1) online")
@@ -104,10 +88,10 @@ struct ContactsListView: View {
                         Text("user not found")
                     }
             
-                case .MessagingView(let userName):
+                case .ChatDetailView(let userName):
                     if let index = agoraRTMVM.listOfContacts.firstIndex(where: {$0.userID == userName}){
                         // Go to ContactDetailView
-                        MessagingView(contact: $agoraRTMVM.listOfContacts[index], path: $path)
+                        ChatDetailView(contact: $agoraRTMVM.listOfContacts[index], path: $path)
                             .environmentObject(agoraRTMVM)
                     }else {
                         Text("user not found")

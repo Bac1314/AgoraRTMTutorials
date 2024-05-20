@@ -24,9 +24,10 @@
 		29CA22412BF4B70B00014A2D /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA22402BF4B70B00014A2D /* MainView.swift */; };
 		29CA22432BF4B7CD00014A2D /* ChatsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA22422BF4B7CD00014A2D /* ChatsListView.swift */; };
 		29CA22472BF5B8E900014A2D /* MessageItemLocalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA22452BF5B8E900014A2D /* MessageItemLocalView.swift */; };
-		29CA22482BF5B8E900014A2D /* MessageItemRemoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA22462BF5B8E900014A2D /* MessageItemRemoteView.swift */; };
-		29CA224B2BF6048900014A2D /* MessagingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA224A2BF6048900014A2D /* MessagingView.swift */; };
+		29CA224B2BF6048900014A2D /* ChatDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA224A2BF6048900014A2D /* ChatDetailView.swift */; };
 		29CA224F2BF7517000014A2D /* MeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA224E2BF7517000014A2D /* MeView.swift */; };
+		29CA22512BF7613B00014A2D /* CustomMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA22502BF7613B00014A2D /* CustomMessage.swift */; };
+		29CA22532BFB253900014A2D /* ChatListItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA22522BFB253900014A2D /* ChatListItemView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -61,9 +62,10 @@
 		29CA22402BF4B70B00014A2D /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		29CA22422BF4B7CD00014A2D /* ChatsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatsListView.swift; sourceTree = "<group>"; };
 		29CA22452BF5B8E900014A2D /* MessageItemLocalView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MessageItemLocalView.swift; sourceTree = "<group>"; };
-		29CA22462BF5B8E900014A2D /* MessageItemRemoteView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MessageItemRemoteView.swift; sourceTree = "<group>"; };
-		29CA224A2BF6048900014A2D /* MessagingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagingView.swift; sourceTree = "<group>"; };
+		29CA224A2BF6048900014A2D /* ChatDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatDetailView.swift; sourceTree = "<group>"; };
 		29CA224E2BF7517000014A2D /* MeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeView.swift; sourceTree = "<group>"; };
+		29CA22502BF7613B00014A2D /* CustomMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMessage.swift; sourceTree = "<group>"; };
+		29CA22522BFB253900014A2D /* ChatListItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListItemView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -136,6 +138,7 @@
 				29BD81D82BECD46000E251AF /* Configurations.swift */,
 				29BD81DB2BECD4F500E251AF /* CustomGlobal.swift */,
 				29BD81DF2BEDC41400E251AF /* Contact.swift */,
+				29CA22502BF7613B00014A2D /* CustomMessage.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -169,9 +172,9 @@
 			children = (
 				29BD81E32BEDCEEB00E251AF /* ContactsListItemView.swift */,
 				29BD81E12BEDC44000E251AF /* ContactDetailView.swift */,
-				29CA224A2BF6048900014A2D /* MessagingView.swift */,
+				29CA22522BFB253900014A2D /* ChatListItemView.swift */,
+				29CA224A2BF6048900014A2D /* ChatDetailView.swift */,
 				29CA22452BF5B8E900014A2D /* MessageItemLocalView.swift */,
-				29CA22462BF5B8E900014A2D /* MessageItemRemoteView.swift */,
 			);
 			path = ChildViews;
 			sourceTree = "<group>";
@@ -254,15 +257,16 @@
 				29CA224F2BF7517000014A2D /* MeView.swift in Sources */,
 				29BD81E42BEDCEEB00E251AF /* ContactsListItemView.swift in Sources */,
 				29CA22432BF4B7CD00014A2D /* ChatsListView.swift in Sources */,
-				29CA224B2BF6048900014A2D /* MessagingView.swift in Sources */,
+				29CA224B2BF6048900014A2D /* ChatDetailView.swift in Sources */,
 				29BD81D92BECD46000E251AF /* Configurations.swift in Sources */,
 				29BD81E82BEF487C00E251AF /* CustomViewModifiers.swift in Sources */,
 				29BD81E22BEDC44000E251AF /* ContactDetailView.swift in Sources */,
 				29BD81D32BECCE2F00E251AF /* LoginView.swift in Sources */,
 				29BD81D52BECCE3D00E251AF /* ContactsListView.swift in Sources */,
-				29CA22482BF5B8E900014A2D /* MessageItemRemoteView.swift in Sources */,
 				2974458E2BECC6F600FA3835 /* AgoraRTMViewModel.swift in Sources */,
+				29CA22512BF7613B00014A2D /* CustomMessage.swift in Sources */,
 				29BD81E02BEDC41400E251AF /* Contact.swift in Sources */,
+				29CA22532BFB253900014A2D /* ChatListItemView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

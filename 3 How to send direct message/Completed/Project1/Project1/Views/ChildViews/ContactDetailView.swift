@@ -59,7 +59,7 @@ struct ContactDetailView: View {
                         Image(systemName: "message.fill")
                             .modifier(CustomContactBtnRectangleOutline(isActive: $contact.online))
                             .onTapGesture {
-                                path.append(customNavigateType.MessagingView(username: contact.userID))
+                                path.append(customNavigateType.ChatDetailView(username: contact.userID))
                             }
                             .disabled(!contact.online)
                     }
@@ -208,20 +208,21 @@ struct ContactDetailView: View {
             }
 
             
-            // Button to add as friend or remove friend
+//            // Button to add as friend or remove friend
+            
             if contact.userID != agoraRTMVM.userID {
                 Button(action: {
-                    if agoraRTMVM.friendList.contains(contact.userID) {
+                    if agoraRTMVM.friendList.contains(where: { $0.userID == contact.userID}) {
                         agoraRTMVM.removeFriend(contact: contact)
                     }else {
                         agoraRTMVM.addAsFriend(contact: contact)
                     }
                 }, label: {
-                    Text(agoraRTMVM.friendList.contains(contact.userID) ? "Remove friend" : "Add friend")
+                    Text( agoraRTMVM.friendList.contains(where: { $0.userID == contact.userID}) ? "Remove friend" : "Add friend")
                         .font(.headline)
                         .foregroundStyle(Color.white)
                         .padding()
-                        .background(agoraRTMVM.friendList.contains(contact.userID) ? Color.red : Color.accentColor)
+                        .background(agoraRTMVM.friendList.contains(where: { $0.userID == contact.userID}) ? Color.red : Color.accentColor)
                         .clipShape(
                             RoundedRectangle(cornerRadius: 16)
                         )
@@ -282,7 +283,7 @@ struct ContactDetailView: View {
                                 if isEditing {
                                     // Save it
                                     Task {
-                                        contact = temporaryContact
+                                        temporaryContact = contact
                                         let _ = await agoraRTMVM.setUserPresenceProfile()
                                     }
                                 }

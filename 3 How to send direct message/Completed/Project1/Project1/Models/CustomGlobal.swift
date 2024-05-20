@@ -14,7 +14,7 @@ enum customNavigateType : Hashable{
 //    case ChatsListView
 //    case ContactsListView
     case ContactDetailView(username: String)
-    case MessagingView(username: String)
+    case ChatDetailView(username: String)
 //    case RTCCallingView(username: String)
 
 }
