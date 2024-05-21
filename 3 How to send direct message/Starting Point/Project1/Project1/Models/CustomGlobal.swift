@@ -8,6 +8,10 @@
 import Foundation
 import UIKit
 
+enum customNavigateType : Hashable{
+    case ContactDetailView(username: String)
+}
+
 enum customError: LocalizedError {
     case loginRTMError
     case emptyUIDLoginError
@@ -21,11 +25,6 @@ enum customError: LocalizedError {
         }
     }
 }
-
-//enum filteredUsersType: String {
-//    case friends
-//    case all
-//}
 
 // Convert OBJECT to JSONSTRING
 func convertOBJECTtoJSONString<T: Encodable>(object: T) -> String? {

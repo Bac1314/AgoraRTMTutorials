@@ -12,9 +12,10 @@ import AgoraRtmKit
 class AgoraRTMViewModel: NSObject, ObservableObject {
     var agoraRtmKit: AgoraRtmClientKit? = nil
     @AppStorage("userID") var userID: String = ""
+    @AppStorage("userAvatar") var userAvatar: String = "avatar_default" // Only used for displaying avatar on login page
     @Published var isLoggedIn: Bool = false
     @Published var listOfContacts : [Contact] = [] // Including friends and strangers (differentiate with the friend parameter
-    @Published var friendList: [String] = []
+    @Published var friendList: [Contact] = []
     
     let rootChannel: String = "rootChannel"
     let contactKey: String = "contactKey"
@@ -94,6 +95,11 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
     // changed from saveContact --> setUserPresenceProfile
     func setUserPresenceProfile(savetoStorage: Bool = true) async -> Bool {
         if let currentUserContact = listOfContacts.first(where: {$0.userID == userID}) {
+            
+            await MainActor.run {
+                userAvatar = currentUserContact.avatar // For display avatar on login only
+            }
+            
             if let jsonString = convertOBJECTtoJSONString(object: currentUserContact) {
                 // Setup Agora Presence Item
                 let item = AgoraRtmStateItem()
@@ -187,7 +193,7 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
                         newSavedContact.online = newSavedContact.userID == userID ? true : false // all saved friends would be offline, we'll change it from the didReceivePresenceEvent callback
                         listOfContacts.append(newSavedContact)
                         if newSavedContact.userID != userID {
-                            friendList.append(newSavedContact.userID)
+                            friendList.append(newSavedContact)
                             print("bac's friendlist \(friendList)")
                         }
                     }
@@ -202,8 +208,8 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
     func addAsFriend(contact: Contact){
         Task {
             await MainActor.run {
-                if !friendList.contains(contact.userID) {
-                    friendList.append(contact.userID)
+                if !friendList.contains(where: { $0.userID == contact.userID}) {
+                    friendList.append(contact)
                 }
             }
             await saveContactToStorage(contact: contact)
@@ -214,13 +220,12 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
     func removeFriend(contact: Contact){
         Task {
             await MainActor.run {
-                if friendList.contains(contact.userID) {
-                    friendList.removeAll(where: {$0.self == contact.userID})
-                }
+                friendList.removeAll(where: {$0.userID == contact.userID})
             }
             await deleteContactFromStorage(contact: contact)
         }
     }
+
 }
 
 // Agora RTM Callbacks
@@ -230,7 +235,7 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
         if event.type == .remoteLeaveChannel || event.type == .remoteConnectionTimeout {
             // A remote user left the channel
             if let userIndex = listOfContacts.firstIndex(where: {$0.userID == event.publisher}) {
-                if friendList.contains(listOfContacts[userIndex].userID) {
+                if friendList.contains(where: { $0.userID == listOfContacts[userIndex].userID}) {
                     listOfContacts[userIndex].online = false
                 }else {
                     listOfContacts.remove(at: userIndex)
@@ -300,7 +305,7 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
                 listOfContacts[userIndex] = convertJSONStringToOBJECT(jsonString: newContactJSONString, objectType: Contact.self) ?? Contact(userID: publisher, name: publisher)
                 
                 // Check if it's friend
-                if friendList.contains(listOfContacts[userIndex].userID) {
+                if friendList.contains(where: { $0.userID == listOfContacts[userIndex].userID}) {
                     // Save new friend data to user metadata
                     Task {
                         await saveContactToStorage(contact: listOfContacts[userIndex])
@@ -310,5 +315,7 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
         }
         
     }
+    
+
 }
 

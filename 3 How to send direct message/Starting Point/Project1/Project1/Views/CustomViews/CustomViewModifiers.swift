@@ -22,3 +22,22 @@ struct CustomRectangleOutline: ViewModifier {
             )
     }
 }
+
+struct CustomContactBtnRectangleOutline: ViewModifier {
+    @Binding var isActive: Bool
+    
+    func body(content: Content) -> some View {
+        content
+            .bold()
+            .imageScale(.large)
+            .padding(5)
+            .foregroundStyle(isActive ? Color.accentColor.opacity(0.8) : Color.gray.opacity(0.5))
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .foregroundStyle(Color.white.opacity(0.5))
+                    .scaledToFit()
+                    .frame(width: 50, height: 50)
+            )
+    }
+}
+

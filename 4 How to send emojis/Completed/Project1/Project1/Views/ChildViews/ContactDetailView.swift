@@ -10,7 +10,6 @@ import SwiftUI
 struct ContactDetailView: View {
     @EnvironmentObject var agoraRTMVM: AgoraRTMViewModel
     @Binding var contact: Contact
-    @State var ownerID: String // To differentiate if user tap their own profile or others
     @Binding var path: NavigationPath
     @State var temporaryContact: Contact = Contact(userID: "")
     @State var isEditing: Bool = false
@@ -20,11 +19,13 @@ struct ContactDetailView: View {
         "avatar_default", "avatar1", "avatar2", "avatar3", "avatar4", "avatar5", "avatar6", "avatar7", "avatar8", "avatar9", "avatar10", "avatar11", "avatar12", "avatar_default2"
     ]
     
+    @State var toggleing: Bool = false
+    
     var body: some View {
         ScrollView {
             // MARK: Top View
             VStack{
-                Image(temporaryContact.avatar)
+                Image(contact.avatar)
                     .resizable()
                     .frame(width: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/, height: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -33,24 +34,40 @@ struct ContactDetailView: View {
                             .imageScale(.medium)
                             .foregroundStyle(contact.online ? Color.green : Color.gray)
                             .offset(x: 8, y: -8)
+                            .symbolEffect(.bounce, options: .speed(3).repeat(3), value: contact.online)
+
                     }
                     .padding()
                     .layoutPriority(2)
                     .padding(.top, 24)
+    
                 
                 
-                Text("@\(temporaryContact.userID)") // username
+                Text("@\(contact.userID)") // username
                     .foregroundStyle(Color.gray)
                     .padding(.bottom, 4)
                 
-                Text(temporaryContact.name.isEmpty ? "\(temporaryContact.userID)" : "\(temporaryContact.name)").bold()
+                Text(contact.name.isEmpty ? "\(contact.userID)" : "\(contact.name)").bold()
                     .font(.title2)
                 
-                Text("\(temporaryContact.company)\(temporaryContact.company.isEmpty || temporaryContact.title.isEmpty ? "" : " | ")\(temporaryContact.title)")
+                Text("\(contact.company)\(contact.company.isEmpty || contact.title.isEmpty ? "" : " | ")\(contact.title)")
                     .font(.subheadline)
+                
+                // Contact Buttons
+                if contact.userID != agoraRTMVM.userID {
+                    HStack(spacing: 24){
+                        Image(systemName: "message.fill")
+                            .modifier(CustomContactBtnRectangleOutline(isActive: $contact.online))
+                            .onTapGesture {
+                                path.append(customNavigateType.ChatDetailView(username: contact.userID))
+                            }
+                            .disabled(!contact.online)
+                    }
+                    .padding(.vertical)
+                }
                                 
             }
-            .frame(height: 360)
+            .frame(height: 420)
             .frame(maxWidth: .infinity)
             .background(Color.blue.opacity(0.2).gradient)
             
@@ -75,11 +92,11 @@ struct ContactDetailView: View {
                                       .padding(4)
                                       .overlay(
                                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                            .stroke(Color.accentColor, lineWidth: temporaryContact.avatar == imageName ? 2.0 : 0.0)
+                                            .stroke(Color.accentColor, lineWidth: contact.avatar == imageName ? 2.0 : 0.0)
                                        )
                                       .onTapGesture {
                                           withAnimation {
-                                              temporaryContact.avatar = imageName
+                                              contact.avatar = imageName
                                           }
                                       }
                             }
@@ -103,25 +120,25 @@ struct ContactDetailView: View {
                         HStack(spacing: 16){
                             ForEach(Gender.allCases, id: \.self) { gender in
                                 HStack{
-                                    Image(systemName: gender == temporaryContact.gender ? "checkmark.circle.fill" : "circle")
+                                    Image(systemName: gender == contact.gender ? "checkmark.circle.fill" : "circle")
                                     Text(gender.rawValue)
                                 }
                                 .modifier(CustomRectangleOutline(isEditing: $isEditing))
                                 .onTapGesture {
                                     withAnimation {
-                                        temporaryContact.gender = gender
+                                        contact.gender = gender
                                     }
                                 }
                             }
                         }
                     }
-                }else if temporaryContact.gender != .prefernoresponse {
+                }else if contact.gender != .prefernoresponse {
                     Text("Gender")
                         .font(.subheadline)
                         .foregroundStyle(.gray)
                     
                     HStack {
-                        Text("\(temporaryContact.gender.rawValue)")
+                        Text("\(contact.gender.rawValue)")
                             .font(.headline)
                         Spacer()
                     }
@@ -139,7 +156,7 @@ struct ContactDetailView: View {
                     .font(.subheadline)
                     .foregroundStyle(.gray)
                 
-                TextField("", text: $temporaryContact.name)
+                TextField("", text: $contact.name)
                     .modifier(CustomRectangleOutline(isEditing: $isEditing))
             }
             .padding(.vertical, 6)
@@ -152,7 +169,7 @@ struct ContactDetailView: View {
                     .font(.subheadline)
                     .foregroundStyle(.gray)
                 
-                TextField("", text: $temporaryContact.company)
+                TextField("", text: $contact.company)
                     .modifier(CustomRectangleOutline(isEditing: $isEditing))
             }
             .padding(.vertical, 6)
@@ -165,7 +182,7 @@ struct ContactDetailView: View {
                     .font(.subheadline)
                     .foregroundStyle(.gray)
                 
-                TextField("", text: $temporaryContact.title)
+                TextField("", text: $contact.title)
                     .modifier(CustomRectangleOutline(isEditing: $isEditing))
                 
             }
@@ -174,42 +191,48 @@ struct ContactDetailView: View {
             .disabled(!isEditing)
             
             // DESCRIPTION
-            VStack(alignment: .leading, spacing: 6){
-                Text("Description")
-                    .font(.subheadline)
-                    .foregroundStyle(.gray)
-                
-                TextEditor(text: $temporaryContact.description)
-                    .lineLimit(3)
-                    .frame(minHeight: 80)
-                    .modifier(CustomRectangleOutline(isEditing: $isEditing))
+            if isEditing || (!isEditing && !contact.description.isEmpty) {
+                VStack(alignment: .leading, spacing: 6){
+                    Text("Description")
+                        .font(.subheadline)
+                        .foregroundStyle(.gray)
+                    
+                    TextEditor(text: $contact.description)
+                        .lineLimit(3)
+                        .frame(minHeight: 80)
+                        .modifier(CustomRectangleOutline(isEditing: $isEditing))
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 12)
+                .disabled(!isEditing)
             }
-            .padding(.vertical, 6)
-            .padding(.horizontal, 12)
-            .disabled(!isEditing)
+
             
-            // Button to add as friend or remove friend
-            if contact.userID != ownerID {
+//            // Button to add as friend or remove friend
+            
+            if contact.userID != agoraRTMVM.userID {
                 Button(action: {
-                    if agoraRTMVM.friendList.contains(contact.userID) {
+                    if agoraRTMVM.friendList.contains(where: { $0.userID == contact.userID}) {
                         agoraRTMVM.removeFriend(contact: contact)
                     }else {
                         agoraRTMVM.addAsFriend(contact: contact)
                     }
                 }, label: {
-                    Text(agoraRTMVM.friendList.contains(contact.userID) ? "Remove friend" : "Add friend")
+                    Text( agoraRTMVM.friendList.contains(where: { $0.userID == contact.userID}) ? "Remove friend" : "Add friend")
                         .font(.headline)
                         .foregroundStyle(Color.white)
                         .padding()
-                        .background(agoraRTMVM.friendList.contains(contact.userID) ? Color.red : Color.accentColor)
+                        .background(agoraRTMVM.friendList.contains(where: { $0.userID == contact.userID}) ? Color.red : Color.accentColor)
                         .clipShape(
                             RoundedRectangle(cornerRadius: 16)
                         )
+                        .padding(.vertical)
                 })
             }
             
 
         }
+        .toolbar(contact.userID != agoraRTMVM.userID ? .hidden : .visible, for: .tabBar)
         .onAppear(perform: {
             temporaryContact = contact
         })
@@ -219,49 +242,65 @@ struct ContactDetailView: View {
         .navigationTitle("")
         .toolbar{
             // Back button
-            ToolbarItem(placement: .topBarLeading) {
-                Button(action : {
-                    if contact.isEqual(to: temporaryContact) {
-                        path.removeLast()
-                    }else {
-                        withAnimation {
-                            showAlert.toggle()
+            
+            if contact.userID != agoraRTMVM.userID {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(action : {
+                        if contact.isEqual(to: temporaryContact) {
+                            path.removeLast()
+                        }else {
+                            withAnimation {
+                                showAlert.toggle()
+                            }
                         }
-                    }
-                }){
-                    HStack{
-                        Image(systemName: "arrow.left")
-                        Text("Back")
+                    }){
+                        HStack{
+                            Image(systemName: "arrow.left")
+                            Text("Back")
+                        }
                     }
                 }
             }
             
-            ToolbarItem(placement: .topBarTrailing) {
-                // Edit button
-                if temporaryContact.userID == ownerID {
+            else if contact.userID == agoraRTMVM.userID {
+                ToolbarItem(placement: .topBarLeading) {
                     Button(action : {
                         withAnimation {
-                            if isEditing {
-                                // Save it
-                                Task {
-                                    contact = temporaryContact
-                                    let _ = await agoraRTMVM.setUserPresenceProfile()
-                                }
-                            }
-                            isEditing.toggle()
+                            agoraRTMVM.logoutRTM()
                         }
                     }){
                         HStack{
-//                            Image(systemName:  isEditing ? "square.and.arrow.down" : "pencil")
-                            Text(isEditing ? "Save" : "Edit")
-                                .bold()
-                                .disabled(isEditing && contact.isEqual(to: temporaryContact))
+                            Text("Logout")
+                                .foregroundStyle(Color.red)
                         }
-                        .padding(12)
                     }
                 }
                 
+                ToolbarItem(placement: .topBarTrailing) {
+                    // Edit button
+                        Button(action : {
+                            withAnimation {
+                                if isEditing {
+                                    // Save it
+                                    Task {
+                                        temporaryContact = contact
+                                        let _ = await agoraRTMVM.setUserPresenceProfile()
+                                    }
+                                }
+                                isEditing.toggle()
+                            }
+                        }){
+                            HStack{
+                                Text(isEditing ? "Save" : "Edit")
+                                    .bold()
+                                    .disabled(isEditing && contact.isEqual(to: temporaryContact))
+                            }
+                            .padding(12)
+                        }
+                    
+                }
             }
+
         }
         .alert("Unsave changes", isPresented: $showAlert) {
             
@@ -285,10 +324,10 @@ struct ContactDetailView: View {
 
 #Preview {
     struct Preview: View {
-        @State private var contact = Contact(userID: "bac1234", name: "Bac", gender: .male, company: "Agora", title: "TAM", description: "I work as a technical account manager (TAM) for Agora, based in the Shanghai office", avatar: "avatar_default")
+        @State private var contact = Contact(userID: "bac1234", name: "Bac", gender: .male, company: "Agora", title: "TAM", description: "I work as a technical account manager (TAM) for Agora, based in the Shanghai office", avatar: "avatar_default", online: true)
         
         var body: some View {
-            ContactDetailView(contact: $contact, ownerID: contact.userID, path: .constant(NavigationPath()))
+            ContactDetailView(contact: $contact, path: .constant(NavigationPath()))
                 .environmentObject(AgoraRTMViewModel())
         }
     }

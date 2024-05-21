@@ -8,22 +8,18 @@
 import SwiftUI
 
 struct LoginView: View {
-    @StateObject var agoraRTMVM: AgoraRTMViewModel = AgoraRTMViewModel()
+    @EnvironmentObject var agoraRTMVM: AgoraRTMViewModel
     @State var isLoading : Bool = false
-    @State var path = NavigationPath()
     
     var body: some View {
-        
-        NavigationStack(path: $path){
             VStack(alignment: .center, spacing: 6){
-                Image("avatar_default")
+                Image(agoraRTMVM.userAvatar)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 100)
                     .clipShape(RoundedRectangle(cornerRadius: /*@START_MENU_TOKEN@*/25.0/*@END_MENU_TOKEN@*/))
                     .padding(.bottom, 40)
                 
-        
                 HStack{
                     TextField("Input User ID", text: $agoraRTMVM.userID)
                         .padding(.horizontal)
@@ -37,8 +33,6 @@ struct LoginView: View {
                                 isLoading = true
                                 try await agoraRTMVM.loginRTM()
                                 isLoading = false
-                                
-                                path.append("ContactsListView") // Navigate to main view
                             }catch {
                                 isLoading = false
                                 print("Login error \(error.localizedDescription)")
@@ -56,31 +50,12 @@ struct LoginView: View {
                     })
                     .buttonStyle(.plain)
                 }
-                .frame(height: 50)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .stroke(Color.gray, lineWidth: 1.0)
                 )
             }
             .padding()
-            .navigationDestination(for: String.self, destination: { value in
-                if value == "ContactsListView"{
-                    ContactsListView(path: $path)
-                        .environmentObject(agoraRTMVM)
-                }
-                else if value == agoraRTMVM.userID {
-                    // Go to CurrentUser ContactView
-                    if let currentUserIndex = agoraRTMVM.listOfContacts.firstIndex(where: {$0.userID == agoraRTMVM.userID}) {
-                        ContactDetailView(contact: $agoraRTMVM.listOfContacts[currentUserIndex], ownerID: agoraRTMVM.userID, path: $path)
-                            .environmentObject(agoraRTMVM)
-                    }
-                }else if let index = agoraRTMVM.listOfContacts.firstIndex(where: {$0.userID == value}){
-                    // Go to Friend ContactView
-                    ContactDetailView(contact: $agoraRTMVM.listOfContacts[index], ownerID: agoraRTMVM.userID, path: $path)
-                        .environmentObject(agoraRTMVM)
-                }
-        
-            })
             .overlay {
                 // MARK: Loading Icon
                 if isLoading {
@@ -88,12 +63,10 @@ struct LoginView: View {
                         .scaleEffect(CGSize(width: 3.0, height: 3.0))
                 }
             }
-            
-        }
-
     }
 }
 
 #Preview {
     LoginView()
+        .environmentObject(AgoraRTMViewModel())
 }
