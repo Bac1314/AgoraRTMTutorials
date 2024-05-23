@@ -130,6 +130,7 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
                 
                 // Create default contact
                 var newContact = Contact(userID: event.userId)
+                
 
                 // Check if user contact info exists on RTM PRESENCE storage
                 if let newContactJSONString = event.states.first(where: {$0.key == contactKey})?.value {
@@ -140,6 +141,10 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
                 
                 // Add to list
                 listOfContacts.append(newContact)
+                
+                /*
+                 
+                 */
 
             }
             

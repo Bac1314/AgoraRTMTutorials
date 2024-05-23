@@ -12,7 +12,8 @@ struct MessageItemLocalView: View {
     var customMessage: CustomMessage
     var isSender: Bool
 
-    
+    var onButtonTap: (() -> Void)?
+
     var body: some View {
         if isSender {
             HStack(alignment: .bottom){
@@ -22,9 +23,12 @@ struct MessageItemLocalView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 
                 VStack(alignment: .leading, spacing: 4){
-                    Text("Me - \(contact.name.isEmpty ? contact.userID : contact.name)")
-                        .foregroundStyle(Color.accentColor)
+//                    Text("Me - \(contact.name.isEmpty ? contact.userID : contact.name)")
+//                        .foregroundStyle(Color.accentColor)
                     
+                    Text(customMessage.lastUpdated, format: .dateTime)
+                        .font(.caption)
+
                     // Display Text
                     Text(customMessage.message)
                         .padding(8)
@@ -42,9 +46,12 @@ struct MessageItemLocalView: View {
 
                 Spacer()
                 VStack(alignment: .trailing, spacing: 4){
-                    Text("\(contact.name.isEmpty ? contact.userID : contact.name)")
-                        .foregroundStyle(Color.accentColor)
-                    
+//                    Text("\(contact.name.isEmpty ? contact.userID : contact.name)")
+//                        .foregroundStyle(Color.accentColor)
+//                    
+                    Text(customMessage.lastUpdated, format: .dateTime)
+                        .font(.caption)
+
                     
                     // Display Text
                     Text(customMessage.message)
@@ -59,6 +66,9 @@ struct MessageItemLocalView: View {
                     .resizable()
                     .frame(width: 35, height: 35)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .onTapGesture {
+                        self.onButtonTap?()
+                    }
             }
             .padding(.bottom, 10)
         }
