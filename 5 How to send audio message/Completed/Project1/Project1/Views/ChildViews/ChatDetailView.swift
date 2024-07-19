@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AVFoundation
 
 
 struct ChatDetailView: View {
@@ -19,6 +20,11 @@ struct ChatDetailView: View {
     @State var isRecording: Bool = false
     
     var bottomID = UUID()
+    
+    // Audio Recorder & Player
+    @State var audioRecorder: AVAudioRecorder!
+    @State var audioPlayer: AVAudioPlayer!
+    @State var currentRecordingURL: URL?
     
     var body: some View {
         // List of messages
@@ -51,9 +57,15 @@ struct ChatDetailView: View {
                             
                             if let senderContact = agoraRTMVM.listOfContacts.first(where: {$0.userID == message.sender}) {
                                 MessageItemLocalView(contact: senderContact, customMessage: message, isSender: message.sender == agoraRTMVM.userID) {
-                                    
                                     // Navigate to contact detail view
                                     path.append(customNavigateType.ContactDetailView(username: senderContact.userID))
+                                }
+                                .onTapGesture {
+                                    if message.messageType == .audio {
+                                        if let audioURL = message.messageLocalURL {
+                                            playAudio(fileURL: audioURL)
+                                        }
+                                    }
                                 }
                             }else {
                                 Text("Contact not found")
@@ -89,6 +101,7 @@ struct ChatDetailView: View {
                 
                 // MARK: SEND MESSAGE VIEW
                 HStack{
+                    // Recording button toggle
                     Button {
                         // Enable Audio Recording View
                         withAnimation {
@@ -107,7 +120,7 @@ struct ChatDetailView: View {
                     .disabled(!friendContact.online)
 
                     
-                    
+                    // Text Message TextField AND Audio Recording
                     HStack{
                         if !showAudioRecord {
                             // Show text edit buttons
@@ -144,17 +157,23 @@ struct ChatDetailView: View {
                                 .foregroundStyle(Color.primary)
                                 .frame(minWidth: 0, maxWidth: .infinity)
                                 .background()
-                                .gesture(
-                                    DragGesture(minimumDistance: 0.0)
-                                        .onChanged { value in
-                                            if isRecording == false {
-                                                isRecording = true
-                                            }
-                                        }
-                                        .onEnded { value in
-                                            isRecording = false
-                                        }
-                                )
+//                                .gesture(
+//                                    DragGesture(minimumDistance: 0.0)
+//                                        .onChanged { value in
+//                                            if isRecording == false {
+//                                               isRecording = true
+//                                                toggleRecording()
+//                                            }
+//                                        }
+//                                        .onEnded { value in
+//                                            isRecording = false
+//                                            toggleRecording()
+//                                        }
+//                                )
+                                .onTapGesture {
+                                    isRecording = !isRecording
+                                    toggleRecording()
+                                }
                             
                         }
                         
@@ -164,7 +183,6 @@ struct ChatDetailView: View {
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
                             .stroke(Color.gray, lineWidth: 1.0)
                     )
-                    
                     
                     
                 }
@@ -198,6 +216,58 @@ struct ChatDetailView: View {
         (message.sender == friendContact.userID && message.receiver == agoraRTMVM.userID)
     }
     
+    // MARK: MEDIA CONTROL FUNCTIONS
+//    @MainActor
+    func toggleRecording() {
+        if isRecording {
+            // Start recording
+            currentRecordingURL = agoraRTMVM.getDocumentsDirectory().appendingPathComponent("\(agoraRTMVM.userID)_\(Date().timeIntervalSince1970)_recording.m4a")
+            
+            let settings = [
+                AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+                AVSampleRateKey: 12000,
+                AVNumberOfChannelsKey: 1,
+                AVEncoderAudioQualityKey: AVAudioQuality.medium.rawValue
+            ]
+
+            do {
+                if let recordingURL = currentRecordingURL {
+                    try AVAudioSession.sharedInstance().setCategory(.record, mode: .default)
+                    audioRecorder = try AVAudioRecorder(url: recordingURL, settings: settings)
+                    audioRecorder.record()
+                }
+            } catch {
+                print("Recording failed")
+            }
+        } else {
+            // Stop recording
+            audioRecorder.stop()
+            audioRecorder = nil
+            
+            if let recordingURL = currentRecordingURL {
+//                let audioPlayer = try? AVAudioPlayer(contentsOf: recordingURL)
+//                let duration : Int = Int(audioPlayer?.duration ?? 0)
+                
+                Task {
+                    await agoraRTMVM.publishFileToUser(userName: friendContact.userID, fileURL: recordingURL, messageType: .audio)
+                }
+                
+            }
+            
+        }
+    }
+
+    func playAudio(fileURL: URL) {
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+
+            audioPlayer = try AVAudioPlayer(contentsOf: fileURL)
+            audioPlayer.prepareToPlay()
+            audioPlayer.play()
+        } catch {
+            print("Failed to play audio file \(fileURL): \(error)")
+        }
+    }
 }
 
 

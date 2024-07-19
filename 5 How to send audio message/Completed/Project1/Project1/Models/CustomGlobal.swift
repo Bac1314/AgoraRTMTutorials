@@ -17,11 +17,9 @@ enum customNavigateType : Hashable{
 
 enum customMessageType: String, Codable {
     case text
-    case audioInfo
-    case audioChunk
+    case audio
     case image
-    case fileInfo
-    case fileChunk
+    case file
 }
 
 enum customError: LocalizedError {

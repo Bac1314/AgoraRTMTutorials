@@ -21,8 +21,9 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
     let rootChannel: String = "rootChannel"
     let contactKey: String = "contactKey"
     
-    // Audio Message
-    @Published var tempAudioChunks : [UUID: [Data]] = [:]
+    // File Message
+//    @Published var tempFileChunks : [UUID: [Data]] = [:]
+    @Published var tempFileChunks : [TempFileChunks] = []
 
     
     // MARK: Login to Agora Server
@@ -97,7 +98,7 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
         return false
     }
     
-    // MARK: Save Contact to Presence storage (temporary data)
+    // MARK: Save Contact to Presence storage (Temporary data)
     // Changed from saveContact --> setUserPresenceProfile
     func setUserPresenceProfile(savetoStorage: Bool = true) async -> Bool {
         if let currentUserContact = listOfContacts.first(where: {$0.userID == userID}) {
@@ -257,114 +258,71 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
         return false
     }
     
-//    // MARK: Publish Audio Message
-//    func publishAudioToUser(userName: String, fileURL: URL) async -> Bool{
-//        
-//        if let fileData = convertFileToData(fileURL: fileURL), !fileURL.pathExtension.isEmpty {
-//            // Split the file into 32KB chunks
-//            let dataChunks = splitDataIntoChunks(data: fileData)
-//            
-//            // PART 1 :  First send the file info to receivers to let them know there is an incoming  file with filesize dataChunks.count
-//            let pubOptions = AgoraRtmPublishOptions()
-//            pubOptions.channelType = .message
-//            pubOptions.customType = fileInfoKey
-//            
-//            let fileInfo = FileInfo(id: UUID(), name: fileURL.lastPathComponent, countOf32KB: dataChunks.count, type: fileURL.pathExtension, url: "", owner: userID)
-//            
-//            if let JSONString = convertObjectToJsonString(object: fileInfo) {
-//                if let (_, error) = await agoraRtmKit?.publish(channelName: channelName, message: JSONString, option: pubOptions){
-//                    if error == nil {
-//                      // Add local record
-//                        fileInfos.append(fileInfo)
-//                        fileChunks[fileInfo.id] = []
-//                    }else{
-//                        print("publishToChannel fileInfoKey failed")
-//                        return false
-//                    }
-//                }
-//            }
-//    
-//            
-//            // PART 2 : Send the chunk files one by one
-//            let pubOptions2 = AgoraRtmPublishOptions()
-//            pubOptions2.channelType = .message
-//            pubOptions2.customType = fileChunkKey
-//    
-//            // Publish each chunk one-by-one
-//            for dataChunk in dataChunks {
-//                if let (_, error) = await agoraRtmKit?.publish(channelName: channelName, data: dataChunk, option: pubOptions2){
-//                    if error == nil {
-//                        // Append to local record
-//                        if let index = fileInfos.firstIndex(where: {$0.id == fileInfo.id}), fileChunks.keys.contains(fileInfos[index].id){
-//                            fileChunks[fileInfos[index].id]?.append(dataChunk)
-//                            
-//                            if fileChunks[fileInfos[index].id]?.count == fileInfos[index].countOf32KB {
-//                                let mergeData = combineDataChunks(chunks: fileChunks[fileInfos[index].id]!)
-//                                
-//                                Task {
-//                                    await MainActor.run {
-//                                        testingData = mergeData
-//                                    }
-//                                }
-//                                
-//                                let url = convertSaveDataToFile(data: mergeData, fileName: fileInfos[index].name, fileType: fileInfos[index].type, sender: fileInfos[index].owner)
-//
-////                                fileChunks.removeValue(forKey: fileInfos[index].id)
-//                                fileInfos[index].url = url?.absoluteString ?? ""
-//                            }
-//                        }
-//                        
-//                    }else{
-//                        print("publishToChannel fileChunkKey failed \(String(describing: error))")
-//                    }
-//                }
-//            }
-//            
-//            return true
-//        }
-//        
-//        return false
-//    }
-//
-//    // MARK: FILE AND DATA CONVERSION
-//    func convertFileToData(fileURL: URL) -> Data? {
-////        let fileURL = getDocumentsDirectory().appendingPathComponent(fileName)
-//        do {
-//            let fileData = try Data(contentsOf: fileURL)
-//            return fileData
-//        } catch {
-//            print("Failed to get data from file \(error)")
-//        }
-//        return nil
-//    }
-//    
-//    
-//    func convertSaveDataToFile(data: Data, fileName: String, fileType: String, sender: String) -> URL? {
-//        do {
-//            let tempFileURL = getDocumentsDirectory().appendingPathComponent("\(fileName)")
-//            
-//            try data.write(to: tempFileURL)
-//            
-//            return tempFileURL
-//        } catch {
-//            print("Failed to convert data to file: \(error)")
-//        }
-//        
-//        return nil
-//    }
+    // MARK: Publish File Message
+    @MainActor
+    func publishFileToUser(userName: String, fileURL: URL, messageType: customMessageType) async -> Bool{
+        
+        if let fileData = convertFileToData(fileURL: fileURL), !fileURL.pathExtension.isEmpty {
+            // Split the file into 32KB chunks
+            let dataChunks = splitDataIntoChunks(data: fileData)
+            
+            // PART 1 :  First send the file info to receivers to let them know there is an incoming  file with filesize dataChunks.count
+            let pubOptions = AgoraRtmPublishOptions()
+            pubOptions.channelType = .message
+            pubOptions.customType = messageType.rawValue
+            
+            var customMessage = CustomMessage(id: UUID(), sender: userID, receiver: userName, lastUpdated: Date(), fileName: fileURL.lastPathComponent, messageType: messageType, messageSize: fileData.count, messageChunkCountIn32KB: dataChunks.count)
+            
+            if let JSONString = convertOBJECTtoJSONString(object: customMessage) {
+                if let (_, error) = await agoraRtmKit?.publish(channelName: userName, message: JSONString, option: pubOptions){
+                    if error == nil {
+                      // Add local record if it is successful
+                        customMessage.messageLocalURL = fileURL
+                        messages.append(customMessage)
+                    }else{
+                        print("publishToChannel fileInfoKey failed")
+                        return false
+                    }
+                }
+            }
     
-    private static func fileURL() throws -> URL {
+            
+            // PART 2 : Send the chunk files one by one
+            let pubOptions2 = AgoraRtmPublishOptions()
+            pubOptions2.channelType = .message
+            pubOptions2.customType = messageType.rawValue
+    
+            // Publish each chunk one-by-one
+            for dataChunk in dataChunks {
+                if let (_, error) = await agoraRtmKit?.publish(channelName: userName, data: dataChunk, option: pubOptions2){
+                    if error == nil {
+                        // Chunk successfully sent
+                    }else{
+                        print("publishToChannel fileChunkKey failed \(String(describing: error))")
+                    }
+                }
+            }
+            
+            return true
+        }
+        
+        return false
+    }
+
+    private static func LocalStoredMessagesURL() throws -> URL {
         try FileManager.default.url(for: .documentDirectory,
                                     in: .userDomainMask,
                                     appropriateFor: nil,
                                     create: false)
         .appendingPathComponent("rtmMessages.data")
     }
+    
 
 
+    // MARK: Load Messages stored on user's device
     func loadMessagesFromLocalStorage() async throws {
         let task = Task<[CustomMessage], Error> {
-            let fileURL = try Self.fileURL()
+            let fileURL = try Self.LocalStoredMessagesURL()
             guard let data = try? Data(contentsOf: fileURL) else {
                 return []
             }
@@ -381,14 +339,94 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
     }
 
 
+    // MARK: Save Messages to user's device
     func saveMessagesToLocalStorage(messages: [CustomMessage]) async throws {
         let task = Task {
             let data = try JSONEncoder().encode(messages)
-            let outfile = try Self.fileURL()
+            let outfile = try Self.LocalStoredMessagesURL()
             try data.write(to: outfile)
         }
         _ = try await task.value
     }
+    
+    
+    // MARK: FUNCTION TO RETRIEVE THE ACTUAL FILES ON LOCAL DIRECTORY
+    func getDocumentsDirectory() -> URL {
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        return paths[0]
+    }
+        
+    
+    
+    // MARK: Convert FILE to DATA type
+    func convertFileToData(fileURL: URL) -> Data? {
+//        let fileURL = getDocumentsDirectory().appendingPathComponent(fileName)
+        do {
+            let fileData = try Data(contentsOf: fileURL)
+            return fileData
+        } catch {
+            print("Failed to get data from file \(error)")
+        }
+        return nil
+    }
+    
+    // MARK: Convert DATA to FILE type
+    func convertDataToFile(data: Data, fileName: String, sender: String) -> URL? {
+        do {
+            let tempFileURL = getDocumentsDirectory().appendingPathComponent("\(fileName)")
+            
+            try data.write(to: tempFileURL)
+            
+            return tempFileURL
+        } catch {
+            print("Failed to convert data to file: \(error)")
+        }
+        
+        return nil
+    }
+    
+    // MARK: SPLIT THE DATA into smaller chunks of 32KB
+    func splitDataIntoChunks(data: Data, chunkSize: Int = 32000) -> [Data] {
+        var offset = 0
+        var chunks = [Data]()
+        
+        while offset < data.count {
+            let length = min(chunkSize, data.count - offset)
+            let chunk = data.subdata(in: offset..<(offset+length))
+            chunks.append(chunk)
+            offset += length
+        }
+        return chunks
+    }
+    
+    // MARK: Combine the data chunks into one DATA
+    func combineDataChunks(chunks: [Data]) -> Data {
+        var combinedData = Data()
+        for chunk in chunks {
+            combinedData.append(chunk)
+        }
+        return combinedData
+    }
+    
+    // MARK: DELETE ALL FILES DOWNLOADE TO LOCAL STORAGE
+    func deleteAllFiles() {
+        let fileManager = FileManager.default
+        let documentsURL = getDocumentsDirectory()
+        
+        do {
+            let fileURLs = try fileManager.contentsOfDirectory(at: documentsURL, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])
+//            let audioFileURLs = fileURLs.filter({ $0.pathExtension == "m4a" })
+            
+            for file in fileURLs {
+                try fileManager.removeItem(at: file)
+                print("File \(file.lastPathComponent) was deleted.")
+            }
+            
+        } catch {
+            print("An error occurred while deleting files: \(error)")
+        }
+    }
+    
 }
 
 // Agora RTM Callbacks
@@ -510,27 +548,54 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
                     try? await saveMessagesToLocalStorage(messages: messages)
                 }
                 break
-            case customMessageType.audioInfo.rawValue:
-                // Receive the audio message info
-            
-                break
                 
-            case customMessageType.audioChunk.rawValue:
+            case customMessageType.file.rawValue, customMessageType.audio.rawValue:
                 // Receive the audio message chunks
-            
+                
+                if let jsonString = event.message.stringData, let customMessage = convertJSONStringToOBJECT(jsonString: jsonString, objectType: CustomMessage.self) {
+                    // Save message to local
+                    Task {
+                        // Create temp storage for data chunks
+                        tempFileChunks.append(TempFileChunks(id: customMessage.id, sender: event.publisher, fileCountof32KB: customMessage.messageChunkCountIn32KB ?? 0, chunks: []))
+                        
+                        // Save message local storage
+                        await MainActor.run {
+                            withAnimation {
+                                messages.append(customMessage)
+                            }
+
+                        }
+                        try? await saveMessagesToLocalStorage(messages: messages)
+                    }
+                }else if let rawData = event.message.rawData {
+                    
+                    if let index = tempFileChunks.firstIndex(where: {$0.sender == event.publisher}) {
+                        Task {
+                            await MainActor.run { 
+                                tempFileChunks[index].chunks.append(rawData)
+                            }
+                        }
+                        tempFileChunks[index].chunks.append(rawData)
+                        
+                        if tempFileChunks[index].chunks.count >= tempFileChunks[index].fileCountof32KB {
+                            // Finish receiving all files
+                            let mergeData = combineDataChunks(chunks: tempFileChunks[index].chunks)
+                            guard let localMessageIndex =  messages.firstIndex(where: { $0.id == tempFileChunks[index].id }) else {
+                                print("Bac's didReceiveMessageEvent event.message.rawData failed to find localMessageIndex")
+                                return
+                            }
+                            let localFileURL = convertDataToFile(data: mergeData, fileName: messages[localMessageIndex].fileName ?? "EmptyName", sender: event.publisher)
+                            messages[localMessageIndex].messageLocalURL = localFileURL
+                            
+                        }
+                    }
+                }
+                
+
                 break
                 
             case customMessageType.image.rawValue:
                 // Receive the image message
-            
-                break
-                
-            case customMessageType.fileInfo.rawValue:
-                // Receive the audio message info
-            
-                break
-            case customMessageType.fileChunk.rawValue:
-                // Receive the audio message chunks
             
                 break
             case .none:

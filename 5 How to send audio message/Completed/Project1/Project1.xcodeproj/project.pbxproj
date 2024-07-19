@@ -31,6 +31,7 @@
 		29CA22512BF7613B00014A2D /* CustomMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA22502BF7613B00014A2D /* CustomMessage.swift */; };
 		29CA22532BFB253900014A2D /* ChatListItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA22522BFB253900014A2D /* ChatListItemView.swift */; };
 		29CA225A2BFC3CE800014A2D /* CustomAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA22592BFC3CE800014A2D /* CustomAlert.swift */; };
+		29DDBE2A2C4A59FC003AB153 /* TempFileChunks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29DDBE292C4A59FC003AB153 /* TempFileChunks.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -72,6 +73,7 @@
 		29CA22502BF7613B00014A2D /* CustomMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMessage.swift; sourceTree = "<group>"; };
 		29CA22522BFB253900014A2D /* ChatListItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListItemView.swift; sourceTree = "<group>"; };
 		29CA22592BFC3CE800014A2D /* CustomAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomAlert.swift; sourceTree = "<group>"; };
+		29DDBE292C4A59FC003AB153 /* TempFileChunks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TempFileChunks.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -147,6 +149,7 @@
 				29BD81DF2BEDC41400E251AF /* Contact.swift */,
 				29CA22502BF7613B00014A2D /* CustomMessage.swift */,
 				299B1D612C11BE9E00F99209 /* AudioMessage.swift */,
+				29DDBE292C4A59FC003AB153 /* TempFileChunks.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -277,6 +280,7 @@
 				2974458E2BECC6F600FA3835 /* AgoraRTMViewModel.swift in Sources */,
 				299B1D622C11BE9E00F99209 /* AudioMessage.swift in Sources */,
 				29CA22512BF7613B00014A2D /* CustomMessage.swift in Sources */,
+				29DDBE2A2C4A59FC003AB153 /* TempFileChunks.swift in Sources */,
 				29BD81E02BEDC41400E251AF /* Contact.swift in Sources */,
 				29CA22532BFB253900014A2D /* ChatListItemView.swift in Sources */,
 			);
