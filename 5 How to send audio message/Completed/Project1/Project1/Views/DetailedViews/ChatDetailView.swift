@@ -83,7 +83,6 @@ struct ChatDetailView: View {
                     }
                     .onChange(of: agoraRTMVM.messages.count) { oldValue, newValue in
                         withAnimation {
-                            print("Bac's messages count changed \(newValue)")
                             proxy.scrollTo(bottomID)
                         }
                         

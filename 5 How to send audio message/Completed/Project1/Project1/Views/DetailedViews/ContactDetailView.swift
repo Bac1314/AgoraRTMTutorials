@@ -125,6 +125,7 @@ struct ContactDetailView: View {
                                     Text(gender.rawValue)
                                 }
                                 .modifier(CustomRectangleOutline(isEditing: $isEditing))
+                                .padding(1)
                                 .onTapGesture {
                                     withAnimation {
                                         contact.gender = gender
@@ -231,6 +232,9 @@ struct ContactDetailView: View {
                 })
             }
             
+            Spacer(minLength: isEditing ? 350 : 0)
+
+            
 
         }
         .toolbar(contact.userID != agoraRTMVM.userID ? .hidden : .visible, for: .tabBar)
@@ -243,14 +247,14 @@ struct ContactDetailView: View {
         .navigationTitle("")
         .toolbar{
             // Back button
-            
             if contact.userID != agoraRTMVM.userID {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(action : {
                         if contact.isEqual(to: temporaryContact) {
                             path.removeLast()
-                        }else {
+                        }else if !contact.isEqual(to: temporaryContact) && contact.userID == agoraRTMVM.userID {
                             withAnimation {
+                                // User has unsave changes, alert them
                                 showAlert.toggle()
                             }
                         }
@@ -304,7 +308,6 @@ struct ContactDetailView: View {
 
         }
         .alert("Unsave changes", isPresented: $showAlert) {
-            
             Button("Save", role: .none) {
                 Task {
                     contact = temporaryContact

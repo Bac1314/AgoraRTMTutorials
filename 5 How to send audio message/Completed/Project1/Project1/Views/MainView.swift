@@ -33,9 +33,16 @@ struct MainView: View {
                         .tabItem{
                             Label("Me", systemImage: "person")
                         }
+                    
+//                    TestingView()
+//                        .transition(.slide)
+//                        .tabItem{
+//                            Label("Testing", systemImage: "gear")
+//                        }
 
                 }
-                .transition(.slide)
+     
+
             }
     }
 }
