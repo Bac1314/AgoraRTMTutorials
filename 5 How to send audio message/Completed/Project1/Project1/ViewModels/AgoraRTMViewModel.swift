@@ -263,12 +263,13 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
     func publishFileToUser(userName: String, fileURL: URL, messageType: customMessageType) async -> Bool{
         
         if let fileData = convertFileToData(fileURL: fileURL), !fileURL.pathExtension.isEmpty {
+
             // Split the file into 32KB chunks
             let dataChunks = splitDataIntoChunks(data: fileData)
             
             // PART 1 :  First send the file info to receivers to let them know there is an incoming  file with filesize dataChunks.count
             let pubOptions = AgoraRtmPublishOptions()
-            pubOptions.channelType = .message
+            pubOptions.channelType = .user
             pubOptions.customType = messageType.rawValue
             
             var customMessage = CustomMessage(id: UUID(), sender: userID, receiver: userName, lastUpdated: Date(), fileName: fileURL.lastPathComponent, messageType: messageType, messageSize: fileData.count, messageChunkCountIn32KB: dataChunks.count)
@@ -279,8 +280,10 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
                       // Add local record if it is successful
                         customMessage.messageLocalURL = fileURL
                         messages.append(customMessage)
+                        try? await saveMessagesToLocalStorage(messages: messages)
+
                     }else{
-                        print("publishToChannel fileInfoKey failed")
+                        print("publishToChannel fileInfoKey failed \(error)")
                         return false
                     }
                 }
@@ -289,7 +292,7 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
             
             // PART 2 : Send the chunk files one by one
             let pubOptions2 = AgoraRtmPublishOptions()
-            pubOptions2.channelType = .message
+            pubOptions2.channelType = .user
             pubOptions2.customType = messageType.rawValue
     
             // Publish each chunk one-by-one
@@ -297,6 +300,7 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
                 if let (_, error) = await agoraRtmKit?.publish(channelName: userName, data: dataChunk, option: pubOptions2){
                     if error == nil {
                         // Chunk successfully sent
+
                     }else{
                         print("publishToChannel fileChunkKey failed \(String(describing: error))")
                     }
@@ -456,7 +460,6 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
         }else if event.type == .snapshot {
             // Get a snapshot of all the subscribed users' 'presence' data (aka temporary profile key-value pairs)
             // Add users to list from snapshop
-            print("Bac's snapshot ")
             for event in event.snapshot {
                 // Check if user exists in the listOfContacts
                 if let userIndex = listOfContacts.firstIndex(where: {$0.userID == event.userId}) {
@@ -500,7 +503,8 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
                 
             }
             
-        }else if event.type == .remoteStateChanged {
+        }
+        else if event.type == .remoteStateChanged {
             // A remote user's 'presence' data was changed aka user edited their profile key-value pairs
             if let userIndex = listOfContacts.firstIndex(where: {$0.userID == event.publisher}), let newContactJSONString = event.states.first(where: {$0.key == contactKey})?.value, let publisher = event.publisher{
                 listOfContacts[userIndex] = convertJSONStringToOBJECT(jsonString: newContactJSONString, objectType: Contact.self) ?? Contact(userID: publisher, name: publisher)
@@ -519,7 +523,8 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
     
     // Receive message event notifications in subscribed message channels and subscribed topics.
     func rtmKit(_ rtmKit: AgoraRtmClientKit, didReceiveMessageEvent event: AgoraRtmMessageEvent) {
-   
+        print("Bac's didReceiveMessageEvent channelType: \(event.channelType) customType: \(event.customType ?? "")")
+
         switch event.channelType {
         case .message:
             break
@@ -551,8 +556,11 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
                 
             case customMessageType.file.rawValue, customMessageType.audio.rawValue:
                 // Receive the audio message chunks
+                print("Bac's didReceiveMessageEvent \(event.customType ?? "negative")")
                 
                 if let jsonString = event.message.stringData, let customMessage = convertJSONStringToOBJECT(jsonString: jsonString, objectType: CustomMessage.self) {
+                    print("Bac's didReceiveMessageEvent JSONString DATA convert success")
+
                     // Save message to local
                     Task {
                         // Create temp storage for data chunks
@@ -562,19 +570,27 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
                         await MainActor.run {
                             withAnimation {
                                 messages.append(customMessage)
+                                print("Bac's didReceiveMessageEvent append audio message")
                             }
 
                         }
-                        try? await saveMessagesToLocalStorage(messages: messages)
+//                        try? await saveMessagesToLocalStorage(messages: messages)
                     }
                 }else if let rawData = event.message.rawData {
+                    print("Bac's didReceiveMessageEvent RAWDATA ")
+
                     
                     if let index = tempFileChunks.firstIndex(where: {$0.sender == event.publisher}) {
-                        Task {
-                            await MainActor.run { 
-                                tempFileChunks[index].chunks.append(rawData)
-                            }
-                        }
+                        print("Bac's didReceiveMessageEvent tempFileChunks found ")
+
+//                        Task {
+//                            await MainActor.run { 
+//                                print("Bac's didReceiveMessageEvent tempFileChunks appending ")
+//
+//                                tempFileChunks[index].chunks.append(rawData)
+//                            }
+//                        }
+                        print("Bac's didReceiveMessageEvent tempFileChunks appending ")
                         tempFileChunks[index].chunks.append(rawData)
                         
                         if tempFileChunks[index].chunks.count >= tempFileChunks[index].fileCountof32KB {
@@ -587,6 +603,10 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
                             let localFileURL = convertDataToFile(data: mergeData, fileName: messages[localMessageIndex].fileName ?? "EmptyName", sender: event.publisher)
                             messages[localMessageIndex].messageLocalURL = localFileURL
                             
+                            Task {
+                                try? await saveMessagesToLocalStorage(messages: messages)
+                            }
+
                         }
                     }
                 }

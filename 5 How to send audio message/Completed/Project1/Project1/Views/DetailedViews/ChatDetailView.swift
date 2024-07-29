@@ -56,7 +56,7 @@ struct ChatDetailView: View {
                         }) { message in
                             
                             if let senderContact = agoraRTMVM.listOfContacts.first(where: {$0.userID == message.sender}) {
-                                MessageItemLocalView(contact: senderContact, customMessage: message, isSender: message.sender == agoraRTMVM.userID) {
+                                MessageItemView(contact: senderContact, customMessage: message, isSender: message.sender == agoraRTMVM.userID) {
                                     // Navigate to contact detail view
                                     path.append(customNavigateType.ContactDetailView(username: senderContact.userID))
                                 }
@@ -73,8 +73,8 @@ struct ChatDetailView: View {
                             
                         }
                         
-                        // For scrolling
-                        Spacer(minLength: /*@START_MENU_TOKEN@*/0/*@END_MENU_TOKEN@*/)
+                        // For scrolling to the bottom
+                        Spacer(minLength: 50)
                             .id(bottomID)
                     }
                     .scrollDismissesKeyboard(.immediately)
@@ -83,6 +83,7 @@ struct ChatDetailView: View {
                     }
                     .onChange(of: agoraRTMVM.messages.count) { oldValue, newValue in
                         withAnimation {
+                            print("Bac's messages count changed \(newValue)")
                             proxy.scrollTo(bottomID)
                         }
                         
@@ -157,24 +158,19 @@ struct ChatDetailView: View {
                                 .foregroundStyle(Color.primary)
                                 .frame(minWidth: 0, maxWidth: .infinity)
                                 .background()
-//                                .gesture(
-//                                    DragGesture(minimumDistance: 0.0)
-//                                        .onChanged { value in
-//                                            if isRecording == false {
-//                                               isRecording = true
-//                                                toggleRecording()
-//                                            }
-//                                        }
-//                                        .onEnded { value in
-//                                            isRecording = false
-//                                            toggleRecording()
-//                                        }
-//                                )
-                                .onTapGesture {
-                                    isRecording = !isRecording
-                                    toggleRecording()
-                                }
-                            
+                                .gesture(
+                                    DragGesture(minimumDistance: 0.0)
+                                        .onChanged { value in
+                                            if isRecording == false {
+                                                print("Bac's start recording")
+                                                startRecording()
+                                            }
+                                        }
+                                        .onEnded { value in
+                                            print("Bac's end recording")
+                                            stopRecording()
+                                        }
+                                )
                         }
                         
                     }
@@ -217,46 +213,46 @@ struct ChatDetailView: View {
     }
     
     // MARK: MEDIA CONTROL FUNCTIONS
-//    @MainActor
-    func toggleRecording() {
-        if isRecording {
-            // Start recording
-            currentRecordingURL = agoraRTMVM.getDocumentsDirectory().appendingPathComponent("\(agoraRTMVM.userID)_\(Date().timeIntervalSince1970)_recording.m4a")
-            
-            let settings = [
-                AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-                AVSampleRateKey: 12000,
-                AVNumberOfChannelsKey: 1,
-                AVEncoderAudioQualityKey: AVAudioQuality.medium.rawValue
-            ]
+    
+    @MainActor
+    func startRecording(){
+        isRecording = true
 
-            do {
-                if let recordingURL = currentRecordingURL {
-                    try AVAudioSession.sharedInstance().setCategory(.record, mode: .default)
-                    audioRecorder = try AVAudioRecorder(url: recordingURL, settings: settings)
-                    audioRecorder.record()
-                }
-            } catch {
-                print("Recording failed")
-            }
-        } else {
-            // Stop recording
-            audioRecorder.stop()
-            audioRecorder = nil
-            
+        currentRecordingURL = agoraRTMVM.getDocumentsDirectory().appendingPathComponent("\(agoraRTMVM.userID)_\(Date().timeIntervalSince1970)_recording.m4a")
+        
+        let settings = [
+            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+            AVSampleRateKey: 12000,
+            AVNumberOfChannelsKey: 1,
+            AVEncoderAudioQualityKey: AVAudioQuality.medium.rawValue
+        ]
+
+        do {
             if let recordingURL = currentRecordingURL {
-//                let audioPlayer = try? AVAudioPlayer(contentsOf: recordingURL)
-//                let duration : Int = Int(audioPlayer?.duration ?? 0)
-                
-                Task {
-                    await agoraRTMVM.publishFileToUser(userName: friendContact.userID, fileURL: recordingURL, messageType: .audio)
-                }
-                
+                try AVAudioSession.sharedInstance().setCategory(.record, mode: .default)
+                audioRecorder = try AVAudioRecorder(url: recordingURL, settings: settings)
+                audioRecorder.record()
+            }
+        } catch {
+            print("Recording failed")
+        }
+    }
+    
+    @MainActor
+    func stopRecording(){
+        // Stop recording
+        isRecording = false
+        audioRecorder.stop()
+        audioRecorder = nil
+        
+        if let recordingURL = currentRecordingURL {
+            Task {
+                print("Bac's publishing to \(friendContact.userID)")
+                await agoraRTMVM.publishFileToUser(userName: friendContact.userID, fileURL: recordingURL, messageType: .audio)
             }
             
         }
     }
-
     func playAudio(fileURL: URL) {
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)

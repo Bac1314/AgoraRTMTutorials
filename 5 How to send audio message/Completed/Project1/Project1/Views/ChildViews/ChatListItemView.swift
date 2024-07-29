@@ -10,6 +10,7 @@ import SwiftUI
 struct ChatListItemView: View {
     var contact: Contact
     var lastMessage: String
+    var lastMessageType: customMessageType
     
     var body: some View {
         
@@ -27,8 +28,25 @@ struct ChatListItemView: View {
             
             VStack(alignment: .leading) {
                 Text(contact.name.isEmpty ? "\(contact.userID)" : "\(contact.name)").bold()
-                Text(lastMessage)
-                    .lineLimit(1)
+                
+                if lastMessageType == .text {
+                    Text(lastMessage)
+                        .lineLimit(1)
+                }else if lastMessageType == .audio {
+                    HStack {
+                        Image(systemName: "dot.radiowaves.right")
+                        Text("Audio File").lineLimit(1)
+                        Spacer()
+                    }
+                }
+                else if lastMessageType == .file {
+                    HStack {
+                        Image(systemName: "filemenu.and.cursorarrow")
+                        Text("File").lineLimit(1)
+                        Spacer()
+                    }
+                }
+
             }
             
             Spacer()
@@ -42,7 +60,7 @@ struct ChatListItemView: View {
         var contact = Contact(userID: "bac1234", name: "Bac", gender: .male, company: "Agora", title: "TAM", description: "I work as a technical account manager (TAM) for Agora, based in the Shanghai office", avatar: "avatar_default")
         
         var body: some View {
-            ChatListItemView(contact: contact, lastMessage: "Hello World")
+            ChatListItemView(contact: contact, lastMessage: "Hello World", lastMessageType: .text)
         }
     }
     

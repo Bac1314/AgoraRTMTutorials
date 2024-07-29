@@ -36,8 +36,10 @@ struct ChatsListView: View {
                             (contact.contains(searchText: searchText))) &&
                             agoraRTMVM.friendList.contains(where: { $0.userID == contact.userID})
                         }), id: \.userID) { friendContact in
+                            
+                            let lastMessage = agoraRTMVM.messages.filter({($0.sender == agoraRTMVM.userID && $0.receiver == friendContact.userID ) || ($0.sender == friendContact.userID && $0.receiver == agoraRTMVM.userID) }).last
 
-                            ChatListItemView(contact: friendContact, lastMessage: agoraRTMVM.messages.filter({($0.sender == agoraRTMVM.userID && $0.receiver == friendContact.userID ) || ($0.sender == friendContact.userID && $0.receiver == agoraRTMVM.userID) }).last?.message ?? "")
+                            ChatListItemView(contact: friendContact, lastMessage: lastMessage?.message ?? "", lastMessageType: lastMessage?.messageType ?? .text)
                                 .onTapGesture {
                                     path.append(customNavigateType.ChatDetailView(username: friendContact.userID))
                                 }
