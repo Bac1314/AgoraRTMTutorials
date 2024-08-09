@@ -16,15 +16,24 @@ struct ChatDetailView: View {
     @FocusState var keyboardIsFocused: Bool
     @State var typeNewMessage: String = ""
     @State var lastMessageID: UUID = UUID() // for scrolling
-    @State var showAudioRecord: Bool = false
-    @State var isRecording: Bool = false
+
     
     var bottomID = UUID()
     
     // Audio Recorder & Player
+    @State var showAudioRecord: Bool = false
+    @State var isRecording: Bool = false
     @State var audioRecorder: AVAudioRecorder!
     @State var audioPlayer: AVAudioPlayer!
     @State var currentRecordingURL: URL?
+    
+    // More sharing options: Image, file
+    @State var showMoreSharingOptions: Bool = false
+    @State var showImagePicker: Bool = false
+    @State var showFileImporter = false
+    @State var userSelectedImage: UIImage?
+    @State var userSelectedImageURL: URL?
+
     
     var body: some View {
         // List of messages
@@ -47,7 +56,7 @@ struct ChatDetailView: View {
             
             
             
-            VStack {
+            VStack(spacing: 0) {
                 // MARK: DISPLAY LIST OF MESSAGES
                 ScrollViewReader {proxy in
                     ScrollView{
@@ -98,10 +107,12 @@ struct ChatDetailView: View {
                     }
                     
                 }
+                .padding(.horizontal)
+                .padding(.vertical, 5)
                 
                 // MARK: SEND MESSAGE VIEW
                 HStack{
-                    // Recording button toggle
+                    // MARK: Recording button toggle
                     Button {
                         // Enable Audio Recording View
                         withAnimation {
@@ -118,9 +129,9 @@ struct ChatDetailView: View {
                             .aspectRatio(1, contentMode: .fill)
                     }
                     .disabled(!friendContact.online)
-
                     
-                    // Text Message TextField AND Audio Recording
+                    
+                    // MARK: Text Message TextField OR Audio Recording BTN
                     HStack{
                         if !showAudioRecord {
                             // Show text edit buttons
@@ -151,6 +162,7 @@ struct ChatDetailView: View {
                                     .imageScale(.large)
                             })
                             .disabled(typeNewMessage.isEmpty || !friendContact.online)
+                            
                         }else {
                             // Show audio recording button
                             Text(isRecording ?  "Recording..." : "Hold to record")
@@ -179,11 +191,99 @@ struct ChatDetailView: View {
                             .stroke(Color.gray, lineWidth: 1.0)
                     )
                     
-                    
+                    // MARK: Show more sharing options e.g. file sharing, audio call, video call,
+                    Button {
+                        withAnimation {
+                            showMoreSharingOptions.toggle()
+                        }
+                    } label: {
+                        Image(systemName: "plus")
+                            .padding(12)
+                            .foregroundStyle(!friendContact.online ? Color.secondary : Color.primary)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .stroke(Color.gray, lineWidth: 1.0)
+                            )
+                            .aspectRatio(1, contentMode: .fill)
+                    }
+                    .disabled(!friendContact.online)
+                }
+                .padding(.horizontal)
+                .padding(.top, 5)
+                
+                // MARK: MORE SHARING OPTIONS
+                
+                if showMoreSharingOptions {
+                    VStack(alignment: .center) {
+                        HStack(alignment: .center, spacing: 20) {
+                            Button(action: {
+                                // Button 1 action
+                                withAnimation {
+                                    showMoreSharingOptions.toggle()
+                                    showImagePicker.toggle()
+                                }
+                            }) {
+                                Image(systemName: "photo")
+                                    .font(.title)
+                                    .frame(maxWidth: .infinity, maxHeight: 60)
+                                    .aspectRatio(1, contentMode: .fit)
+                                    .foregroundStyle(Color.gray)
+                                    .background(Color.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .shadow(radius: 4)
+                                    
+                            }
+                            
+                            Button(action: {
+                                // Button 2 action
+                                withAnimation {
+                                    showMoreSharingOptions.toggle()
+                                    showFileImporter.toggle()
+                                }
+                            }) {
+                                Image(systemName: "folder")
+                                    .font(.title)
+                                    .frame(maxWidth: .infinity, maxHeight: 60)
+                                    .aspectRatio(1, contentMode: .fit)
+                                    .foregroundStyle(Color.gray)
+                                    .background(Color.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .shadow(radius: 4)
+
+                            }
+                            
+                        }
+                        .frame(maxWidth: .infinity)
+
+                    }
+                    .transition(.move(edge: .bottom))
+                    .padding(.top)
+                }
+        
+
+            }
+            .sheet(isPresented: $showImagePicker, onDismiss: loadPublishImage) {
+                ImagePicker(selectedImage: $userSelectedImage, imageURL: $userSelectedImageURL)
+            }
+            .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [.pdf, .plainText, .audio, .zip, .image, .webP], allowsMultipleSelection: false
+            ) { result in
+                switch result {
+                case .success(let files):
+                    files.forEach { file in
+                        let gotAccess = file.startAccessingSecurityScopedResource()
+                        if !gotAccess { return }
+                        
+                        Task {
+                            let _ = await agoraRTMVM.publishFileToUser(userName: friendContact.userID, fileURL: file, messageType: .file)
+                            file.stopAccessingSecurityScopedResource()
+                        }
+                    }
+
+                case .failure(let error):
+                    // handle error
+                    print(error)
                 }
             }
-            .padding(.horizontal)
-            .padding(.vertical, 5)
             .toolbar(.hidden, for: .tabBar)
             .toolbar {
                 ToolbarItem(placement: .principal) {
@@ -202,7 +302,19 @@ struct ChatDetailView: View {
                     
                 }
             }
-        .toolbarTitleDisplayMode(.large)
+            .toolbarTitleDisplayMode(.large)
+        }
+    }
+    
+    func loadPublishImage() {
+        Task {
+            if let imageURL = userSelectedImageURL {
+                let _ = await agoraRTMVM.publishFileToUser(userName: friendContact.userID, fileURL: imageURL, messageType: .image)
+
+            }
+            else {
+                print("Bac's loadPublishImage failed ")
+            }
         }
     }
     
@@ -216,7 +328,7 @@ struct ChatDetailView: View {
     @MainActor
     func startRecording(){
         isRecording = true
-
+        
         currentRecordingURL = agoraRTMVM.getDocumentsDirectory().appendingPathComponent("\(agoraRTMVM.userID)_\(Date().timeIntervalSince1970)_recording.m4a")
         
         let settings = [
@@ -225,7 +337,7 @@ struct ChatDetailView: View {
             AVNumberOfChannelsKey: 1,
             AVEncoderAudioQualityKey: AVAudioQuality.medium.rawValue
         ]
-
+        
         do {
             if let recordingURL = currentRecordingURL {
                 try AVAudioSession.sharedInstance().setCategory(.record, mode: .default)
@@ -236,6 +348,7 @@ struct ChatDetailView: View {
             print("Recording failed")
         }
     }
+
     
     @MainActor
     func stopRecording(){
@@ -246,7 +359,6 @@ struct ChatDetailView: View {
         
         if let recordingURL = currentRecordingURL {
             Task {
-                print("Bac's publishing to \(friendContact.userID)")
                 await agoraRTMVM.publishFileToUser(userName: friendContact.userID, fileURL: recordingURL, messageType: .audio)
             }
             
@@ -255,7 +367,7 @@ struct ChatDetailView: View {
     func playAudio(fileURL: URL) {
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
-
+            
             audioPlayer = try AVAudioPlayer(contentsOf: fileURL)
             audioPlayer.prepareToPlay()
             audioPlayer.play()

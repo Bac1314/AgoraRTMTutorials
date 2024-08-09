@@ -65,8 +65,11 @@ struct ContactsListView: View {
                 HStack(alignment: .center){
                     Spacer()
                     if showFriendsOnly {
-                        Text("\(agoraRTMVM.friendList.count) friends, \(                agoraRTMVM.friendList.filter({ $0.online == true}).count) online")
+                        Text("\(agoraRTMVM.friendList.count) friends, \(agoraRTMVM.listOfContacts.filter { Set(agoraRTMVM.friendList.map { $0.userID }).contains($0.userID) && $0.online }.count) online")
                             .foregroundStyle(Color.gray)
+                        
+                        
+                
                     }else {
                         Text("\(agoraRTMVM.listOfContacts.filter({$0.online}).count-1) online")
                             .foregroundStyle(Color.gray)

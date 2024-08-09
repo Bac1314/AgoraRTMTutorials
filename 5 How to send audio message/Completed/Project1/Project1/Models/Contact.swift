@@ -8,7 +8,6 @@
 import Foundation
 
 struct Contact: Codable {
-//    var id = UUID() // System unique ID
     var userID: String // Agora Unique ID
     var name: String = ""
     var gender: Gender  = .prefernoresponse

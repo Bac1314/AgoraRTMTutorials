@@ -283,7 +283,7 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
                         try? await saveMessagesToLocalStorage(messages: messages)
 
                     }else{
-                        print("publishToChannel fileInfoKey failed \(error)")
+                        print("publishToChannel fileInfoKey failed \(String(describing: error))")
                         return false
                     }
                 }
@@ -363,6 +363,7 @@ class AgoraRTMViewModel: NSObject, ObservableObject {
     
     
     // MARK: Convert FILE to DATA type
+    @MainActor
     func convertFileToData(fileURL: URL) -> Data? {
 //        let fileURL = getDocumentsDirectory().appendingPathComponent(fileName)
         do {
@@ -464,7 +465,6 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
                 // Check if user exists in the listOfContacts
                 if let userIndex = listOfContacts.firstIndex(where: {$0.userID == event.userId}) {
                     // User exists, check if remote user updated their contact
-                    //                    let newContact =  Contact(userID: event.userId, online: true)
                     if let newContactJSONString = event.states.first(where: {$0.key == contactKey})?.value {
                         if let newContactDetails = convertJSONStringToOBJECT(jsonString: newContactJSONString, objectType: Contact.self) {
                             let newContact = newContactDetails
@@ -563,11 +563,12 @@ extension AgoraRTMViewModel: AgoraRtmClientDelegate {
 
                     // Save message to local
                     Task {
-                        // Create temp storage for data chunks
-                        tempFileChunks.append(TempFileChunks(id: customMessage.id, sender: event.publisher, fileCountof32KB: customMessage.messageChunkCountIn32KB ?? 0, chunks: []))
                         
                         // Save message local storage
                         await MainActor.run {
+                            // Create temp storage for data chunks
+                            tempFileChunks.append(TempFileChunks(id: customMessage.id, sender: event.publisher, fileCountof32KB: customMessage.messageChunkCountIn32KB ?? 0, chunks: []))
+
                             withAnimation {
                                 messages.append(customMessage)
                                 print("Bac's didReceiveMessageEvent append audio message")

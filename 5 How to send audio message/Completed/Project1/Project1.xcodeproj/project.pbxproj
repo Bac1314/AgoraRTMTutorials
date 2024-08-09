@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		292CED562C660EFF00002390 /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 292CED552C660EFF00002390 /* ImagePicker.swift */; };
 		2974457B2BECC67A00FA3835 /* Project1App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2974457A2BECC67A00FA3835 /* Project1App.swift */; };
 		2974457F2BECC67B00FA3835 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2974457E2BECC67B00FA3835 /* Assets.xcassets */; };
 		297445822BECC67B00FA3835 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 297445812BECC67B00FA3835 /* Preview Assets.xcassets */; };
@@ -48,6 +49,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		292CED552C660EFF00002390 /* ImagePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePicker.swift; sourceTree = "<group>"; };
 		297445772BECC67A00FA3835 /* Project1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Project1.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2974457A2BECC67A00FA3835 /* Project1App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Project1App.swift; sourceTree = "<group>"; };
 		2974457E2BECC67B00FA3835 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -158,6 +160,7 @@
 				29BD81DF2BEDC41400E251AF /* Contact.swift */,
 				29CA22502BF7613B00014A2D /* CustomMessage.swift */,
 				29DDBE292C4A59FC003AB153 /* TempFileChunks.swift */,
+				292CED552C660EFF00002390 /* ImagePicker.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -270,6 +273,7 @@
 				29CA22412BF4B70B00014A2D /* MainView.swift in Sources */,
 				2974457B2BECC67A00FA3835 /* Project1App.swift in Sources */,
 				29CA22472BF5B8E900014A2D /* MessageItemView.swift in Sources */,
+				292CED562C660EFF00002390 /* ImagePicker.swift in Sources */,
 				299B1D602C11A6C000F99209 /* TestingView.swift in Sources */,
 				29CA225A2BFC3CE800014A2D /* CustomAlert.swift in Sources */,
 				29BD81DC2BECD4F500E251AF /* CustomGlobal.swift in Sources */,
